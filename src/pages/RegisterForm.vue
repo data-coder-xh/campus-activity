@@ -1,9 +1,10 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { createRegistration, getEventDetail } from '../services/api';
 
 const route = useRoute();
+const router = useRouter();
 
 const event = ref(null);
 const loading = ref(false);
@@ -14,14 +15,39 @@ const form = reactive({
   remark: '',
 });
 
-// 格式化日期时间，只显示日期部分
-const formatDate = (dateTimeStr) => {
+// 格式化日期时间，显示完整的日期和时间
+const formatDateTime = (dateTimeStr) => {
   if (!dateTimeStr) return '';
-  // 如果是日期时间格式（YYYY-MM-DD HH:mm:ss），只取日期部分
+  // 如果是日期时间格式（YYYY-MM-DD HH:mm:ss），提取日期和时间
   if (dateTimeStr.includes(' ')) {
-    return dateTimeStr.split(' ')[0];
+    const [date, time] = dateTimeStr.split(' ');
+    // 只取时和分（HH:mm）
+    const timePart = time ? time.substring(0, 5) : '';
+    return `${date} ${timePart}`;
   }
   return dateTimeStr;
+};
+
+// 格式化时间范围显示
+const formatTimeRange = (startTime, endTime) => {
+  if (!startTime || !endTime) return '';
+  
+  const start = formatDateTime(startTime);
+  const end = formatDateTime(endTime);
+  
+  // 提取日期部分
+  const startDate = start.split(' ')[0];
+  const startTimePart = start.split(' ')[1] || '';
+  const endDate = end.split(' ')[0];
+  const endTimePart = end.split(' ')[1] || '';
+  
+  // 如果开始和结束日期相同，只显示一次日期
+  if (startDate === endDate) {
+    return `${startDate} ${startTimePart} - ${endTimePart}`;
+  }
+  
+  // 如果日期不同，显示完整的时间范围
+  return `${start} - ${end}`;
 };
 
 const fetchEvent = async () => {
@@ -57,6 +83,7 @@ onMounted(fetchEvent);
 
 <template>
   <div>
+    <button class="btn-outline" @click="router.back()" style="margin-bottom: 1.5rem;">返回上一页</button>
     <h2 class="page-title">活动报名</h2>
     <p class="page-desc">请确认活动信息并填写备注，确保个人资料已完善。</p>
 
@@ -68,7 +95,7 @@ onMounted(fetchEvent);
         <h3>{{ event.title }}</h3>
         <p>{{ event.description }}</p>
         <ul>
-          <li>时间：{{ formatDate(event.startTime) }} - {{ formatDate(event.endTime) }}</li>
+          <li>时间：{{ formatTimeRange(event.startTime, event.endTime) }}</li>
           <li>地点：{{ event.place }}</li>
           <li>人数：{{ event.currentCount }}/{{ event.limit }} 人</li>
         </ul>
