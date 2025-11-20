@@ -16,6 +16,16 @@ const form = reactive({
   limit: 50,
 });
 
+// 格式化日期时间，只显示日期部分
+const formatDate = (dateTimeStr) => {
+  if (!dateTimeStr) return '';
+  // 如果是日期时间格式（YYYY-MM-DD HH:mm:ss），只取日期部分
+  if (dateTimeStr.includes(' ')) {
+    return dateTimeStr.split(' ')[0];
+  }
+  return dateTimeStr;
+};
+
 const resetForm = () => {
   form.title = '';
   form.cover = '';
@@ -93,12 +103,12 @@ onMounted(fetchEvents);
           <input v-model="form.cover" placeholder="https://example.com/cover.jpg" />
         </div>
         <div class="form-field">
-          <label>开始时间 *</label>
-          <input v-model="form.startTime" type="datetime-local" />
+          <label>开始日期 *</label>
+          <input v-model="form.startTime" type="date" />
         </div>
         <div class="form-field">
-          <label>结束时间 *</label>
-          <input v-model="form.endTime" type="datetime-local" />
+          <label>结束日期 *</label>
+          <input v-model="form.endTime" type="date" />
         </div>
         <div class="form-field">
           <label>地点 *</label>
@@ -144,7 +154,7 @@ onMounted(fetchEvents);
                 {{ item.title }}
                 <span v-if="item.creatorName" class="creator-badge">我创建的</span>
               </td>
-              <td>{{ item.startTime }} ~ {{ item.endTime }}</td>
+              <td>{{ formatDate(item.startTime) }} ~ {{ formatDate(item.endTime) }}</td>
               <td>{{ item.place }}</td>
               <td>{{ item.currentCount }}/{{ item.limit }}</td>
               <td>

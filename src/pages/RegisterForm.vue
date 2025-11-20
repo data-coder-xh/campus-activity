@@ -14,6 +14,16 @@ const form = reactive({
   remark: '',
 });
 
+// 格式化日期时间，只显示日期部分
+const formatDate = (dateTimeStr) => {
+  if (!dateTimeStr) return '';
+  // 如果是日期时间格式（YYYY-MM-DD HH:mm:ss），只取日期部分
+  if (dateTimeStr.includes(' ')) {
+    return dateTimeStr.split(' ')[0];
+  }
+  return dateTimeStr;
+};
+
 const fetchEvent = async () => {
   loading.value = true;
   try {
@@ -58,7 +68,7 @@ onMounted(fetchEvent);
         <h3>{{ event.title }}</h3>
         <p>{{ event.description }}</p>
         <ul>
-          <li>时间：{{ event.startTime }} - {{ event.endTime }}</li>
+          <li>时间：{{ formatDate(event.startTime) }} - {{ formatDate(event.endTime) }}</li>
           <li>地点：{{ event.place }}</li>
           <li>人数：{{ event.currentCount }}/{{ event.limit }} 人</li>
         </ul>

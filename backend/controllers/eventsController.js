@@ -43,9 +43,22 @@ export const createEvent = async (req, res, next) => {
       return res.status(400).json({ message: `缺少必要字段：${missing.join(', ')}` });
     }
 
+    // 将日期转换为完整的日期时间格式
+    // 如果只提供了日期（YYYY-MM-DD），则添加时间部分
+    let startTime = req.body.startTime;
+    let endTime = req.body.endTime;
+    
+    // 检查是否为日期格式（YYYY-MM-DD），如果是则添加时间
+    if (startTime && /^\d{4}-\d{2}-\d{2}$/.test(startTime)) {
+      startTime = `${startTime} 00:00:00`;
+    }
+    if (endTime && /^\d{4}-\d{2}-\d{2}$/.test(endTime)) {
+      endTime = `${endTime} 23:59:59`;
+    }
+
     // 从当前登录用户获取创建者 ID
     const creatorId = req.user.id;
-    const event = await EventModel.createEvent({ ...req.body, creatorId });
+    const event = await EventModel.createEvent({ ...req.body, startTime, endTime, creatorId });
     res.status(201).json(event);
   } catch (error) {
     next(error);
@@ -64,7 +77,16 @@ export const updateEvent = async (req, res, next) => {
       return res.status(403).json({ message: '无权编辑此活动，只能编辑自己创建的活动' });
     }
 
-    const updated = await EventModel.updateEvent(req.params.id, req.body);
+    // 处理日期格式转换
+    const updateData = { ...req.body };
+    if (updateData.startTime && /^\d{4}-\d{2}-\d{2}$/.test(updateData.startTime)) {
+      updateData.startTime = `${updateData.startTime} 00:00:00`;
+    }
+    if (updateData.endTime && /^\d{4}-\d{2}-\d{2}$/.test(updateData.endTime)) {
+      updateData.endTime = `${updateData.endTime} 23:59:59`;
+    }
+
+    const updated = await EventModel.updateEvent(req.params.id, updateData);
     res.json(updated);
   } catch (error) {
     next(error);

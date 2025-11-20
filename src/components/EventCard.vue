@@ -10,6 +10,16 @@ const props = defineProps({
 
 const emit = defineEmits(['view']);
 
+// 格式化日期时间，只显示日期部分
+const formatDate = (dateTimeStr) => {
+  if (!dateTimeStr) return '';
+  // 如果是日期时间格式（YYYY-MM-DD HH:mm:ss），只取日期部分
+  if (dateTimeStr.includes(' ')) {
+    return dateTimeStr.split(' ')[0];
+  }
+  return dateTimeStr;
+};
+
 const statusText = computed(() => {
   if (props.event.status === 0) return '已下线';
   if (props.event.status === 1 && props.event.currentCount >= props.event.limit) return '已满额';
@@ -40,7 +50,7 @@ const progress = computed(() => {
         {{ event.description?.slice(0, 80) }}<span v-if="event.description?.length > 80">...</span>
       </p>
       <ul class="event-card__meta">
-        <li>时间：{{ event.startTime }} - {{ event.endTime }}</li>
+        <li>时间：{{ formatDate(event.startTime) }} - {{ formatDate(event.endTime) }}</li>
         <li>地点：{{ event.place }}</li>
         <li>限额：{{ event.limit }} 人 · 已报名 {{ event.currentCount }} 人</li>
       </ul>
