@@ -10,12 +10,32 @@ const props = defineProps({
 
 const emit = defineEmits(['view']);
 
-// 格式化日期时间，只显示日期部分
+// 格式化日期时间，只显示年月日（YYYY-MM-DD）
 const formatDate = (dateTimeStr) => {
   if (!dateTimeStr) return '';
-  // 如果是日期时间格式（YYYY-MM-DD HH:mm:ss），只取日期部分
+  
+  // 如果是日期时间格式（YYYY-MM-DD HH:mm:ss 或 YYYY-MM-DDTHH:mm:ss），只取日期部分
   if (dateTimeStr.includes(' ')) {
     return dateTimeStr.split(' ')[0];
+  }
+  if (dateTimeStr.includes('T')) {
+    return dateTimeStr.split('T')[0];
+  }
+  // 如果已经是日期格式（YYYY-MM-DD），直接返回
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateTimeStr)) {
+    return dateTimeStr;
+  }
+  // 尝试解析为 Date 对象并格式化
+  try {
+    const date = new Date(dateTimeStr);
+    if (!isNaN(date.getTime())) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+  } catch (e) {
+    // 解析失败，返回原值
   }
   return dateTimeStr;
 };
