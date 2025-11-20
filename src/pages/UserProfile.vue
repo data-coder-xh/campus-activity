@@ -11,6 +11,7 @@ const form = reactive({
   name: '',
   studentId: '',
   phone: '',
+  college: '',
   major: '',
 });
 
@@ -18,6 +19,7 @@ const fillForm = (data = {}) => {
   form.name = data.name || '';
   form.studentId = data.studentId || '';
   form.phone = data.phone || '';
+  form.college = data.college || '';
   form.major = data.major || '';
 };
 
@@ -71,8 +73,12 @@ onMounted(fetchProfile);
         <input v-model="form.studentId" placeholder="例如：20230001" required />
       </div>
       <div class="form-field">
-        <label>学院 / 专业</label>
-        <input v-model="form.major" placeholder="计算机学院 软件工程" />
+        <label>学院</label>
+        <input v-model="form.college" placeholder="例如：计算机学院" />
+      </div>
+      <div class="form-field">
+        <label>专业</label>
+        <input v-model="form.major" placeholder="例如：软件工程" />
       </div>
       <div class="form-field">
         <label>联系电话</label>

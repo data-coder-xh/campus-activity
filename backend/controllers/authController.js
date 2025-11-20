@@ -4,7 +4,7 @@ import { signToken } from '../middlewares/auth.js';
 
 export const register = async (req, res, next) => {
   try {
-    const { username, password, name, studentId, phone, major } = req.body;
+    const { username, password, name, studentId, phone, college, major } = req.body;
     if (!username || !password || !name || !studentId) {
       return res.status(400).json({ message: '请填写完整的账号、密码、姓名与学号' });
     }
@@ -27,6 +27,7 @@ export const register = async (req, res, next) => {
       name,
       studentId,
       phone,
+      college,
       major,
     });
     const token = signToken(user);

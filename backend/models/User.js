@@ -1,7 +1,7 @@
 import { query } from './db.js';
 
 const safeFields =
-  'id, username, role, name, student_id AS studentId, phone, major, create_time AS createTime';
+  'id, username, role, name, student_id AS studentId, phone, college, major, create_time AS createTime';
 const credentialFields = 'id, username, password_hash AS passwordHash, role';
 
 export const getUserById = async (id) => {
@@ -19,10 +19,10 @@ export const getUserByUsername = async (username) => {
   return rows[0];
 };
 
-export const createUser = async ({ username, passwordHash, role = 'student', name, studentId, phone, major }) => {
+export const createUser = async ({ username, passwordHash, role = 'student', name, studentId, phone, college, major }) => {
   const sql =
-    'INSERT INTO users (username, password_hash, role, name, student_id, phone, major) VALUES (?, ?, ?, ?, ?, ?, ?)';
-  const result = await query(sql, [username, passwordHash, role, name, studentId, phone || '', major || '']);
+    'INSERT INTO users (username, password_hash, role, name, student_id, phone, college, major) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+  const result = await query(sql, [username, passwordHash, role, name, studentId, phone || '', college || '', major || '']);
   return getUserById(result.insertId);
 };
 
@@ -34,6 +34,7 @@ export const updateUser = async (id, payload) => {
     name: 'name',
     studentId: 'student_id',
     phone: 'phone',
+    college: 'college',
     major: 'major',
   };
 
