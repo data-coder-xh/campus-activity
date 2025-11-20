@@ -19,8 +19,20 @@ pool.on('error', (err) => {
 });
 
 export const query = async (sql, params = []) => {
-  const [rows] = await pool.execute(sql, params);
-  return rows;
+  try {
+    const [rows] = await pool.execute(sql, params);
+    return rows;
+  } catch (error) {
+    console.error('数据库查询错误:', {
+      sql,
+      params,
+      error: error.message,
+      code: error.code,
+      errno: error.errno,
+      sqlState: error.sqlState,
+    });
+    throw error;
+  }
 };
 
 export default pool;

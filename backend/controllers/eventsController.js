@@ -36,6 +36,11 @@ export const getEventDetail = async (req, res, next) => {
 
 export const createEvent = async (req, res, next) => {
   try {
+    // 检查用户是否已登录
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: '未登录或用户信息无效' });
+    }
+
     const requiredFields = ['title', 'startTime', 'endTime', 'place', 'limit'];
     const missing = requiredFields.filter((field) => !req.body[field]);
 
@@ -58,9 +63,26 @@ export const createEvent = async (req, res, next) => {
 
     // 从当前登录用户获取创建者 ID
     const creatorId = req.user.id;
-    const event = await EventModel.createEvent({ ...req.body, startTime, endTime, creatorId });
+    
+    // 再次确认 creatorId 存在且有效（必须是正整数）
+    if (!creatorId) {
+      return res.status(400).json({ message: '无法获取用户 ID，请重新登录' });
+    }
+    
+    const numericCreatorId = Number(creatorId);
+    if (isNaN(numericCreatorId) || numericCreatorId <= 0 || !Number.isInteger(numericCreatorId)) {
+      return res.status(400).json({ message: '用户 ID 无效，请重新登录' });
+    }
+    
+    const event = await EventModel.createEvent({ ...req.body, startTime, endTime, creatorId: numericCreatorId });
     res.status(201).json(event);
   } catch (error) {
+    console.error('创建活动错误:', {
+      error: error.message,
+      stack: error.stack,
+      body: req.body,
+      user: req.user ? { id: req.user.id, role: req.user.role } : null,
+    });
     next(error);
   }
 };

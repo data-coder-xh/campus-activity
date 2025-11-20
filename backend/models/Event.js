@@ -44,8 +44,14 @@ export const createEvent = async (payload) => {
     creatorId,
   } = payload;
 
+  // 确保 creatorId 是有效的正整数
   if (!creatorId) {
     throw new Error('创建者 ID 不能为空');
+  }
+  
+  const numericCreatorId = Number(creatorId);
+  if (isNaN(numericCreatorId) || numericCreatorId <= 0 || !Number.isInteger(numericCreatorId)) {
+    throw new Error('创建者 ID 必须是有效的正整数');
   }
 
   const sql = `INSERT INTO events (title, cover, description, start_time, end_time, place, \`limit\`, status, creator_id)
@@ -60,8 +66,14 @@ export const createEvent = async (payload) => {
     place,
     limit || 0,
     status,
-    creatorId,
+    numericCreatorId, // 确保是正整数类型
   ]);
+
+  // mysql2 的 execute 返回的 rows 对于 INSERT 操作是 ResultSetHeader 对象，包含 insertId
+  if (!result || typeof result.insertId === 'undefined') {
+    console.error('INSERT 操作返回结果异常:', result);
+    throw new Error('无法获取插入的记录 ID');
+  }
 
   return getEventById(result.insertId);
 };

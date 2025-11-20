@@ -48,6 +48,16 @@ app.use((req, res, next) => {
 
 app.use((err, req, res, next) => {
   const status = err.status || 500;
+  console.error('服务器错误:', {
+    message: err.message,
+    stack: err.stack,
+    code: err.code,
+    errno: err.errno,
+    sqlState: err.sqlState,
+    sqlMessage: err.sqlMessage,
+    path: req.path,
+    method: req.method,
+  });
   res.status(status).json({
     message: err.message || '服务器错误',
     detail: process.env.NODE_ENV === 'development' ? err.stack : undefined,
