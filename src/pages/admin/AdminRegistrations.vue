@@ -126,8 +126,11 @@ onMounted(async () => {
             </span>
           </td>
           <td>
-            <button class="btn-outline" @click="setStatus(item, 1)">通过</button>
-            <button class="ghost-btn" style="margin-left: 0.5rem" @click="setStatus(item, 2)">拒绝</button>
+            <template v-if="item.status === 0">
+              <button class="btn-outline" @click="setStatus(item, 1)">通过</button>
+              <button class="ghost-btn" style="margin-left: 0.5rem" @click="setStatus(item, 2)">拒绝</button>
+            </template>
+            <span v-else>-</span>
           </td>
         </tr>
       </tbody>
