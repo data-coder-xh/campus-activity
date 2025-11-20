@@ -55,6 +55,7 @@ const handleCreate = async () => {
 const toggleStatus = async (event) => {
   try {
     await updateEventStatus(event.id, event.status === 1 ? 0 : 1);
+    message.value = '状态更新成功';
     await fetchEvents();
   } catch (err) {
     message.value = err.response?.data?.message || '更新状态失败';
@@ -65,6 +66,7 @@ const removeEvent = async (event) => {
   if (!confirm(`确认删除活动「${event.title}」？`)) return;
   try {
     await deleteEvent(event.id);
+    message.value = '活动已删除';
     await fetchEvents();
   } catch (err) {
     message.value = err.response?.data?.message || '删除失败';
@@ -118,9 +120,12 @@ onMounted(fetchEvents);
     </section>
 
     <section>
-      <h3>活动列表</h3>
+      <h3>我的活动列表</h3>
+      <p class="page-desc" style="margin-top: 0.5rem; margin-bottom: 1rem; color: #64748b; font-size: 0.9rem;">
+        你只能管理自己创建的活动
+      </p>
       <div v-if="loading" class="empty-state">加载中...</div>
-      <div v-else-if="events.length === 0" class="empty-state">暂无活动</div>
+      <div v-else-if="events.length === 0" class="empty-state">暂无活动，创建第一个活动吧！</div>
       <div v-else class="table-wrapper">
         <table class="table">
           <thead>
@@ -135,7 +140,10 @@ onMounted(fetchEvents);
           </thead>
           <tbody>
             <tr v-for="item in events" :key="item.id">
-              <td>{{ item.title }}</td>
+              <td>
+                {{ item.title }}
+                <span v-if="item.creatorName" class="creator-badge">我创建的</span>
+              </td>
               <td>{{ item.startTime }} ~ {{ item.endTime }}</td>
               <td>{{ item.place }}</td>
               <td>{{ item.currentCount }}/{{ item.limit }}</td>
@@ -168,6 +176,17 @@ onMounted(fetchEvents);
 
 .table-wrapper {
   overflow-x: auto;
+}
+
+.creator-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 </style>
 

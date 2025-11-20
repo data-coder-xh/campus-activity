@@ -26,7 +26,9 @@ CREATE TABLE events (
     place VARCHAR(100) NOT NULL,
     `limit` INT DEFAULT 0,
     status TINYINT DEFAULT 1,
-    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    creator_id INT NOT NULL,
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_event_creator FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE registrations (
@@ -45,9 +47,9 @@ INSERT INTO users (username, password_hash, role, name, student_id, phone, colle
 ('admin', '$2b$10$X1ju3sP8rmvi9RDdtLEBjuESlssgz8L0bWwLtO9PHoV2YJJx9.dpG', 'admin', '管理员', '00000000', '13800000000', '教务处', ''),
 ('student01', '$2b$10$G3dWIhB.xUMSLM81BOmkzOT6YNZe.DhBEdD7xOWMOK/RMKBGIO13W', 'student', '张伟', '20230001', '13800000001', '计算机学院', '软件工程');
 
-INSERT INTO events (title, cover, description, start_time, end_time, place, `limit`, status) VALUES
-('AI 创新工作坊', 'https://picsum.photos/seed/ai/640/360', '面向全校学生的 AI 实践活动，包含算法讲解与实操。', '2025-12-05 14:00:00', '2025-12-05 17:00:00', '信息楼 301', 50, 1),
-('校园马拉松', 'https://picsum.photos/seed/run/640/360', '冬季校园马拉松，设立男女子组，前 100 名可获得纪念品。', '2025-12-20 07:00:00', '2025-12-20 11:30:00', '田径场集合', 200, 1);
+INSERT INTO events (title, cover, description, start_time, end_time, place, `limit`, status, creator_id) VALUES
+('AI 创新工作坊', 'https://picsum.photos/seed/ai/640/360', '面向全校学生的 AI 实践活动，包含算法讲解与实操。', '2025-12-05 14:00:00', '2025-12-05 17:00:00', '信息楼 301', 50, 1, 1),
+('校园马拉松', 'https://picsum.photos/seed/run/640/360', '冬季校园马拉松，设立男女子组，前 100 名可获得纪念品。', '2025-12-20 07:00:00', '2025-12-20 11:30:00', '田径场集合', 200, 1, 1);
 
 INSERT INTO registrations (user_id, event_id, remark, status) VALUES
 (1, 1, '希望体验 AI 实验', 1),

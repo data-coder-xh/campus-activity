@@ -1,23 +1,33 @@
 import { query } from './db.js';
 
 const eventFields =
-  'id, title, cover, description, start_time AS startTime, end_time AS endTime, place, `limit` AS `limit`, status, create_time AS createTime';
+  'e.id, e.title, e.cover, e.description, e.start_time AS startTime, e.end_time AS endTime, e.place, e.`limit` AS `limit`, e.status, e.creator_id AS creatorId, e.create_time AS createTime, u.name AS creatorName';
 
-export const getEvents = async ({ status } = {}) => {
-  let sql = `SELECT ${eventFields} FROM events`;
+export const getEvents = async ({ status, creatorId } = {}) => {
+  let sql = `SELECT ${eventFields} FROM events e LEFT JOIN users u ON e.creator_id = u.id`;
   const params = [];
+  const conditions = [];
 
   if (status !== undefined) {
-    sql += ' WHERE status = ?';
+    conditions.push('e.status = ?');
     params.push(status);
   }
 
-  sql += ' ORDER BY start_time ASC';
+  if (creatorId !== undefined) {
+    conditions.push('e.creator_id = ?');
+    params.push(creatorId);
+  }
+
+  if (conditions.length > 0) {
+    sql += ' WHERE ' + conditions.join(' AND ');
+  }
+
+  sql += ' ORDER BY e.start_time ASC';
   return query(sql, params);
 };
 
 export const getEventById = async (id) => {
-  const rows = await query(`SELECT ${eventFields} FROM events WHERE id = ?`, [id]);
+  const rows = await query(`SELECT ${eventFields} FROM events e LEFT JOIN users u ON e.creator_id = u.id WHERE e.id = ?`, [id]);
   return rows[0];
 };
 
@@ -31,10 +41,15 @@ export const createEvent = async (payload) => {
     place,
     limit,
     status = 1,
+    creatorId,
   } = payload;
 
-  const sql = `INSERT INTO events (title, cover, description, start_time, end_time, place, \`limit\`, status)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+  if (!creatorId) {
+    throw new Error('创建者 ID 不能为空');
+  }
+
+  const sql = `INSERT INTO events (title, cover, description, start_time, end_time, place, \`limit\`, status, creator_id)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
   const result = await query(sql, [
     title,
@@ -45,6 +60,7 @@ export const createEvent = async (payload) => {
     place,
     limit || 0,
     status,
+    creatorId,
   ]);
 
   return getEventById(result.insertId);
