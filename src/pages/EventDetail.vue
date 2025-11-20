@@ -2,13 +2,13 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getEventDetail } from '../services/api';
+import toast from '../services/toast';
 
 const route = useRoute();
 const router = useRouter();
 
 const event = ref(null);
 const loading = ref(false);
-const error = ref('');
 
 // 格式化日期时间，只显示年月日（YYYY-MM-DD）
 const formatDate = (dateTimeStr) => {
@@ -49,11 +49,10 @@ const canRegister = computed(() => {
 
 const fetchEvent = async () => {
   loading.value = true;
-  error.value = '';
   try {
     event.value = await getEventDetail(route.params.id);
   } catch (err) {
-    error.value = err.response?.data?.message || '未能获取活动详情';
+    toast.error(err.response?.data?.message || '未能获取活动详情');
   } finally {
     loading.value = false;
   }
@@ -70,8 +69,7 @@ onMounted(fetchEvent);
   <div>
     <button class="btn-outline" @click="$router.back()">返回上一页</button>
 
-    <div v-if="error" class="empty-state">{{ error }}</div>
-    <div v-else-if="loading" class="empty-state">加载中...</div>
+    <div v-if="loading" class="empty-state">加载中...</div>
 
     <article v-else-if="event" class="event-detail">
       <img class="event-detail__cover" :src="event.cover || 'https://picsum.photos/seed/detail/960/480'" :alt="event.title" />

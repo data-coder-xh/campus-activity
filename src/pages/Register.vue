@@ -3,6 +3,7 @@ import { computed, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { registerAccount } from '../services/api';
 import { useAuthStore } from '../services/auth';
+import toast from '../services/toast';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -19,7 +20,6 @@ const form = reactive({
 });
 
 const loading = ref(false);
-const message = ref('');
 const fieldErrors = reactive({});
 const touched = reactive({});
 
@@ -111,23 +111,22 @@ const handleSubmit = async () => {
 
   // 检查必填字段
   if (!form.username || !form.password || !form.name || !form.studentId) {
-    message.value = '请填写所有必填字段';
+    toast.warning('请填写所有必填字段');
     return;
   }
 
   // 检查字段错误
   if (Object.keys(fieldErrors).length > 0) {
-    message.value = '请修正表单中的错误';
+    toast.warning('请修正表单中的错误');
     return;
   }
 
   if (form.password !== form.confirmPassword) {
-    message.value = '两次输入的密码不一致';
+    toast.warning('两次输入的密码不一致');
     return;
   }
 
   loading.value = true;
-  message.value = '';
   
   try {
     const payload = {
@@ -141,9 +140,10 @@ const handleSubmit = async () => {
     };
     const data = await registerAccount(payload);
     authStore.setSession(data);
+    toast.success('注册成功');
     router.replace({ name: 'EventList' });
   } catch (err) {
-    message.value = err.response?.data?.message || '注册失败，请稍后再试';
+    toast.error(err.response?.data?.message || '注册失败，请稍后再试');
   } finally {
     loading.value = false;
   }
@@ -306,9 +306,6 @@ const handleSubmit = async () => {
 
         <!-- 提交区域 -->
         <div class="form-actions">
-          <div v-if="message" class="form-message" :class="{ 'message-error': message.includes('失败') || message.includes('错误') }">
-            {{ message }}
-          </div>
           <button class="btn-primary btn-submit" type="submit" :disabled="loading">
             <span v-if="loading" class="btn-loading">⏳</span>
             {{ loading ? '注册中...' : '注册并登录' }}

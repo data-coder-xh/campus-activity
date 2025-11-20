@@ -2,10 +2,10 @@
 import { onMounted, reactive, ref } from 'vue';
 import { getMyProfile, updateMyProfile } from '../services/api';
 import { useAuthStore } from '../services/auth';
+import toast from '../services/toast';
 
 const authStore = useAuthStore();
 const loading = ref(false);
-const message = ref('');
 
 const form = reactive({
   name: '',
@@ -25,13 +25,12 @@ const fillForm = (data = {}) => {
 
 const fetchProfile = async () => {
   loading.value = true;
-  message.value = '';
   try {
     const data = await getMyProfile();
     fillForm(data);
     authStore.updateUser(data);
   } catch (err) {
-    message.value = err.response?.data?.message || '加载个人信息失败';
+    toast.error(err.response?.data?.message || '加载个人信息失败');
   } finally {
     loading.value = false;
   }
@@ -39,17 +38,16 @@ const fetchProfile = async () => {
 
 const handleSubmit = async () => {
   if (!form.name || !form.studentId) {
-    message.value = '姓名与学号为必填项';
+    toast.warning('姓名与学号为必填项');
     return;
   }
   loading.value = true;
-  message.value = '';
   try {
     const updated = await updateMyProfile(form);
     authStore.updateUser(updated);
-    message.value = '信息更新成功';
+    toast.success('信息更新成功');
   } catch (err) {
-    message.value = err.response?.data?.message || '保存失败，请稍后再试';
+    toast.error(err.response?.data?.message || '保存失败，请稍后再试');
   } finally {
     loading.value = false;
   }
@@ -89,7 +87,6 @@ onMounted(fetchProfile);
           {{ loading ? '保存中...' : '保存信息' }}
         </button>
       </div>
-      <p v-if="message" style="grid-column: 1 / -1; color: #475569">{{ message }}</p>
     </form>
   </div>
 </template>

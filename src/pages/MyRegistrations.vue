@@ -1,10 +1,10 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue';
 import { getRegistrations } from '../services/api';
+import toast from '../services/toast';
 
 const registrations = ref([]);
 const loading = ref(false);
-const message = ref('');
 const statusFilter = ref('');
 
 const statusMap = {
@@ -15,13 +15,12 @@ const statusMap = {
 
 const fetchData = async () => {
   loading.value = true;
-  message.value = '';
   try {
     const params = {};
     if (statusFilter.value !== '') params.status = statusFilter.value;
     registrations.value = await getRegistrations(params);
   } catch (err) {
-    message.value = err.response?.data?.message || '加载报名记录失败';
+    toast.error(err.response?.data?.message || '加载报名记录失败');
   } finally {
     loading.value = false;
   }
@@ -46,8 +45,7 @@ onMounted(fetchData);
       </select>
     </div>
 
-    <div v-if="message" class="empty-state">{{ message }}</div>
-    <div v-else-if="loading" class="empty-state">加载中...</div>
+    <div v-if="loading" class="empty-state">加载中...</div>
     <div v-else-if="registrations.length === 0" class="empty-state">暂无报名记录</div>
     <table v-else class="table">
       <thead>

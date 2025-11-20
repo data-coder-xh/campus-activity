@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { createRegistration, getEventDetail } from '../services/api';
+import toast from '../services/toast';
 
 const route = useRoute();
 const router = useRouter();
@@ -9,7 +10,6 @@ const router = useRouter();
 const event = ref(null);
 const loading = ref(false);
 const submitting = ref(false);
-const message = ref('');
 
 const form = reactive({
   remark: '',
@@ -55,7 +55,7 @@ const fetchEvent = async () => {
   try {
     event.value = await getEventDetail(route.params.id);
   } catch (err) {
-    message.value = err.response?.data?.message || '无法获取活动信息';
+    toast.error(err.response?.data?.message || '无法获取活动信息');
   } finally {
     loading.value = false;
   }
@@ -63,16 +63,15 @@ const fetchEvent = async () => {
 
 const handleSubmit = async () => {
   submitting.value = true;
-  message.value = '';
   try {
     await createRegistration({
       eventId: Number(route.params.id),
       remark: form.remark,
     });
-    message.value = '报名成功，等待管理员审核';
+    toast.success('报名成功，等待管理员审核');
     form.remark = '';
   } catch (err) {
-    message.value = err.response?.data?.message || '报名失败，请稍后再试';
+    toast.error(err.response?.data?.message || '报名失败，请稍后再试');
   } finally {
     submitting.value = false;
   }
@@ -88,7 +87,7 @@ onMounted(fetchEvent);
     <p class="page-desc">请确认活动信息并填写备注，确保个人资料已完善。</p>
 
     <div v-if="loading" class="empty-state">活动信息加载中...</div>
-    <div v-else-if="!event" class="empty-state">{{ message || '未找到活动' }}</div>
+    <div v-else-if="!event" class="empty-state">未找到活动</div>
 
     <div v-else class="register-card">
       <section>
@@ -109,7 +108,6 @@ onMounted(fetchEvent);
         <button class="btn-primary" type="submit" :disabled="submitting">
           {{ submitting ? '提交中...' : '提交报名' }}
         </button>
-        <p v-if="message" class="form-message">{{ message }}</p>
       </form>
     </div>
   </div>

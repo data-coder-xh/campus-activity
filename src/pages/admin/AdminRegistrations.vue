@@ -1,13 +1,13 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue';
 import { getEvents, getRegistrations, updateRegistrationStatus } from '../../services/api';
+import toast from '../../services/toast';
 
 const events = ref([]);
 const selectedEvent = ref('');
 const statusFilter = ref('');
 const registrations = ref([]);
 const loading = ref(false);
-const message = ref('');
 
 const statusOptions = [
   { value: '', label: '全部' },
@@ -35,20 +35,19 @@ const fetchEvents = async () => {
       selectedEvent.value = String(events.value[0].id);
     }
   } catch (err) {
-    message.value = err.response?.data?.message || '无法加载活动列表';
+    toast.error(err.response?.data?.message || '无法加载活动列表');
   }
 };
 
 const fetchRegistrations = async () => {
   if (!selectedEvent.value) return;
   loading.value = true;
-  message.value = '';
   try {
     const params = { eventId: selectedEvent.value };
     if (statusFilter.value !== '') params.status = statusFilter.value;
     registrations.value = await getRegistrations(params);
   } catch (err) {
-    message.value = err.response?.data?.message || '加载报名列表失败';
+    toast.error(err.response?.data?.message || '加载报名列表失败');
   } finally {
     loading.value = false;
   }
@@ -57,9 +56,10 @@ const fetchRegistrations = async () => {
 const setStatus = async (row, status) => {
   try {
     await updateRegistrationStatus(row.id, status);
+    toast.success('操作成功');
     await fetchRegistrations();
   } catch (err) {
-    message.value = err.response?.data?.message || '操作失败';
+    toast.error(err.response?.data?.message || '操作失败');
   }
 };
 
@@ -95,8 +95,7 @@ onMounted(async () => {
       </div>
     </div>
 
-    <div v-if="message" class="empty-state">{{ message }}</div>
-    <div v-else-if="loading" class="empty-state">加载中...</div>
+    <div v-if="loading" class="empty-state">加载中...</div>
     <div v-else-if="registrations.length === 0" class="empty-state">暂无报名记录</div>
 
     <table v-else class="table" style="margin-top: 1rem">

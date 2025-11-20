@@ -2,10 +2,10 @@
 import { onMounted, reactive, ref, nextTick } from 'vue';
 import { deleteEvent, getEvents, createEvent, updateEventStatus } from '../../services/api';
 import Cropper from 'cropperjs';
+import toast from '../../services/toast';
 
 const events = ref([]);
 const loading = ref(false);
-const message = ref('');
 
 const form = reactive({
   title: '',
@@ -76,13 +76,13 @@ const handleFileSelect = (event) => {
 
   // 验证文件类型
   if (!file.type.startsWith('image/')) {
-    message.value = '请选择图片文件';
+    toast.warning('请选择图片文件');
     return;
   }
 
   // 验证文件大小（限制为 10MB）
   if (file.size > 10 * 1024 * 1024) {
-    message.value = '图片大小不能超过 10MB';
+    toast.warning('图片大小不能超过 10MB');
     return;
   }
 
@@ -153,7 +153,6 @@ const confirmCrop = async () => {
   if (!cropperInstance.value) return;
 
   uploading.value = true;
-  message.value = '';
 
   try {
     // 获取裁剪后的 canvas
@@ -167,7 +166,7 @@ const confirmCrop = async () => {
     // 将 canvas 转换为 blob
     canvas.toBlob(async (blob) => {
       if (!blob) {
-        message.value = '图片处理失败，请重试';
+        toast.error('图片处理失败，请重试');
         uploading.value = false;
         return;
       }
@@ -175,17 +174,17 @@ const confirmCrop = async () => {
         const imageUrl = await uploadToCloudinary(blob);
         console.log('上传成功，图片 URL:', imageUrl);
         form.cover = imageUrl;
-        message.value = '图片上传成功';
+        toast.success('图片上传成功');
         closeCropperModal();
       } catch (err) {
-        message.value = '图片上传失败，请重试';
+        toast.error('图片上传失败，请重试');
         console.error('Upload error:', err);
       } finally {
         uploading.value = false;
       }
     }, 'image/jpeg', 0.9);
   } catch (err) {
-    message.value = '图片处理失败，请重试';
+    toast.error('图片处理失败，请重试');
     console.error('Crop error:', err);
     uploading.value = false;
   }
@@ -213,7 +212,7 @@ const triggerFileSelect = () => {
 // 图片加载错误处理
 const handleImageError = (event) => {
   console.error('图片加载失败:', form.cover);
-  message.value = '图片加载失败，请重新上传';
+  toast.error('图片加载失败，请重新上传');
   event.target.style.display = 'none';
 };
 
@@ -236,34 +235,89 @@ const fetchEvents = async () => {
   try {
     events.value = await getEvents();
   } catch (err) {
-    message.value = err.response?.data?.message || '加载活动列表失败';
+    toast.error(err.response?.data?.message || '加载活动列表失败');
   } finally {
     loading.value = false;
   }
 };
 
 const handleCreate = async () => {
-  if (!form.title || !form.startTime || !form.endTime || !form.place || !form.limit) {
-    message.value = '请补全活动信息';
+  // 字段名称映射
+  const fieldNames = {
+    title: '标题',
+    startTime: '开始日期',
+    endTime: '结束日期',
+    place: '地点',
+    limit: '人数上限',
+  };
+
+  // 收集缺失的必填字段
+  const missingFields = [];
+  
+  if (!form.title || form.title.trim() === '') {
+    missingFields.push(fieldNames.title);
+  }
+  
+  if (!form.startTime) {
+    missingFields.push(fieldNames.startTime);
+  }
+  
+  if (!form.endTime) {
+    missingFields.push(fieldNames.endTime);
+  }
+  
+  if (!form.place || form.place.trim() === '') {
+    missingFields.push(fieldNames.place);
+  }
+  
+  if (!form.limit || form.limit <= 0) {
+    missingFields.push(fieldNames.limit);
+  }
+
+  // 如果有缺失字段，显示详细提示
+  if (missingFields.length > 0) {
+    if (missingFields.length === 1) {
+      toast.warning(`请填写：${missingFields[0]}`);
+    } else {
+      toast.warning(`请填写以下必填项：${missingFields.join('、')}`);
+    }
     return;
   }
+
+  // 验证日期逻辑：结束日期不能早于开始日期
+  if (form.startTime && form.endTime) {
+    const startDate = new Date(form.startTime);
+    const endDate = new Date(form.endTime);
+    if (endDate < startDate) {
+      toast.warning('结束日期不能早于开始日期');
+      return;
+    }
+  }
+
+  // 验证人数上限
+  if (form.limit <= 0) {
+    toast.warning('人数上限必须大于 0');
+    return;
+  }
+
+  // 所有验证通过，创建活动
   try {
     await createEvent(form);
-    message.value = '活动已创建';
+    toast.success('活动已创建');
     resetForm();
     await fetchEvents();
   } catch (err) {
-    message.value = err.response?.data?.message || '创建失败';
+    toast.error(err.response?.data?.message || '创建失败');
   }
 };
 
 const toggleStatus = async (event) => {
   try {
     await updateEventStatus(event.id, event.status === 1 ? 0 : 1);
-    message.value = '状态更新成功';
+    toast.success('状态更新成功');
     await fetchEvents();
   } catch (err) {
-    message.value = err.response?.data?.message || '更新状态失败';
+    toast.error(err.response?.data?.message || '更新状态失败');
   }
 };
 
@@ -271,10 +325,10 @@ const removeEvent = async (event) => {
   if (!confirm(`确认删除活动「${event.title}」？`)) return;
   try {
     await deleteEvent(event.id);
-    message.value = '活动已删除';
+    toast.success('活动已删除');
     await fetchEvents();
   } catch (err) {
-    message.value = err.response?.data?.message || '删除失败';
+    toast.error(err.response?.data?.message || '删除失败');
   }
 };
 
@@ -345,7 +399,6 @@ onMounted(fetchEvents);
           <button class="btn-primary" type="button" @click="handleCreate">创建活动</button>
         </div>
       </div>
-      <p v-if="message" style="margin-top: 0.5rem">{{ message }}</p>
     </section>
 
     <section>

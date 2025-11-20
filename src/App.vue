@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from './services/auth';
+import ToastContainer from './components/ToastContainer.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -81,5 +82,7 @@ const handleLogout = () => {
     <footer class="app-footer">
       <p>© {{ new Date().getFullYear() }} 校园活动报名系统</p>
     </footer>
+
+    <ToastContainer />
   </div>
 </template>

@@ -3,6 +3,7 @@ import { reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { loginAccount } from '../services/api';
 import { useAuthStore } from '../services/auth';
+import toast from '../services/toast';
 
 const router = useRouter();
 const route = useRoute();
@@ -14,15 +15,13 @@ const form = reactive({
 });
 
 const loading = ref(false);
-const message = ref('');
 
 const handleSubmit = async () => {
   if (!form.username || !form.password) {
-    message.value = '请输入账号和密码';
+    toast.warning('请输入账号和密码');
     return;
   }
   loading.value = true;
-  message.value = '';
   try {
     const data = await loginAccount(form);
     authStore.setSession(data);
@@ -35,7 +34,7 @@ const handleSubmit = async () => {
       router.replace({ name: 'EventList' });
     }
   } catch (err) {
-    message.value = err.response?.data?.message || '登录失败，请稍后重试';
+    toast.error(err.response?.data?.message || '登录失败，请稍后重试');
   } finally {
     loading.value = false;
   }
@@ -54,7 +53,6 @@ const handleSubmit = async () => {
       <button class="btn-primary" type="submit" :disabled="loading">
         {{ loading ? '登录中...' : '登录' }}
       </button>
-      <p class="form-message" v-if="message">{{ message }}</p>
       <RouterLink to="/register" class="auth-link">还没有账号？立即注册</RouterLink>
     </form>
   </div>
