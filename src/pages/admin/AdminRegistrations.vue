@@ -9,6 +9,13 @@ const statusFilter = ref('');
 const registrations = ref([]);
 const loading = ref(false);
 
+// 格式化时间，去掉 T 和 .000Z
+const formatTime = (timeStr) => {
+  if (!timeStr) return '';
+  // 去掉 T 和 .000Z，将 ISO 8601 格式转换为 YYYY-MM-DD HH:mm:ss
+  return timeStr.replace('T', ' ').replace(/\.\d{3}Z$/, '');
+};
+
 const statusOptions = [
   { value: '', label: '全部' },
   { value: '0', label: '待审核' },
@@ -118,7 +125,7 @@ onMounted(async () => {
           <td>{{ item.major }}</td>
           <td>{{ item.phone }}</td>
           <td>{{ item.remark || '-' }}</td>
-          <td>{{ item.createTime }}</td>
+          <td>{{ formatTime(item.createTime) }}</td>
           <td>
             <span class="tag" :class="statusClass[item.status]">
               {{ statusLabel[item.status] }}

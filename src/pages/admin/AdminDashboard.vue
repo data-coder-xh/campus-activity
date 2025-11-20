@@ -5,6 +5,7 @@ import toast from '../../services/toast';
 
 const events = ref([]);
 const loading = ref(false);
+const creating = ref(false);
 
 const form = reactive({
   title: '',
@@ -217,7 +218,10 @@ const handleCreate = async () => {
     return;
   }
 
-  // 所有验证通过，先上传图片（如果有）
+  // 所有验证通过，开始创建活动
+  creating.value = true;
+  const creatingToastId = toast.info('正在创建活动...', 0); // duration 为 0 表示不自动消失
+
   try {
     // 如果有选择的图片文件，先上传图片
     if (imageFile.value) {
@@ -226,19 +230,25 @@ const handleCreate = async () => {
         console.log('图片上传成功，返回的 URL:', imageUrl);
         form.cover = imageUrl;
       } catch (err) {
+        toast.removeToast(creatingToastId);
         toast.error('图片上传失败，请重试');
         console.error('图片上传错误:', err);
+        creating.value = false;
         return;
       }
     }
 
     // 创建活动
     await createEvent(form);
+    toast.removeToast(creatingToastId); // 移除"正在创建"的提示
     toast.success('活动已创建');
     resetForm();
     await fetchEvents();
   } catch (err) {
+    toast.removeToast(creatingToastId); // 移除"正在创建"的提示
     toast.error(err.response?.data?.message || '创建失败');
+  } finally {
+    creating.value = false;
   }
 };
 
@@ -327,7 +337,14 @@ onMounted(fetchEvents);
           <textarea v-model="form.description" rows="4" placeholder="补充活动内容、亮点等"></textarea>
         </div>
         <div class="form-field" style="grid-column: 1 / -1">
-          <button class="btn-primary" type="button" @click="handleCreate">创建活动</button>
+          <button 
+            class="btn-primary" 
+            type="button" 
+            :disabled="creating" 
+            @click="handleCreate"
+          >
+            {{ creating ? '正在创建...' : '创建活动' }}
+          </button>
         </div>
       </div>
     </section>

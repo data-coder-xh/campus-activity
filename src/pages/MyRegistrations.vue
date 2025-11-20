@@ -7,6 +7,13 @@ const registrations = ref([]);
 const loading = ref(false);
 const statusFilter = ref('');
 
+// 格式化时间，去掉 T 和 .000Z
+const formatTime = (timeStr) => {
+  if (!timeStr) return '';
+  // 去掉 T 和 .000Z，将 ISO 8601 格式转换为 YYYY-MM-DD HH:mm:ss
+  return timeStr.replace('T', ' ').replace(/\.\d{3}Z$/, '');
+};
+
 const statusMap = {
   0: { label: '待审核', class: 'pending' },
   1: { label: '已通过', class: 'approved' },
@@ -59,7 +66,7 @@ onMounted(fetchData);
       <tbody>
         <tr v-for="item in registrations" :key="item.id">
           <td>{{ item.eventTitle }}</td>
-          <td>{{ item.createTime }}</td>
+          <td>{{ formatTime(item.createTime) }}</td>
           <td>{{ item.remark || '-' }}</td>
           <td>
             <span class="tag" :class="statusMap[item.status].class">

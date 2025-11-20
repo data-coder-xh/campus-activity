@@ -15,39 +15,50 @@ const form = reactive({
   remark: '',
 });
 
-// 格式化日期时间，显示完整的日期和时间
-const formatDateTime = (dateTimeStr) => {
+// 格式化日期时间，只显示年月日（YYYY-MM-DD）
+const formatDate = (dateTimeStr) => {
   if (!dateTimeStr) return '';
-  // 如果是日期时间格式（YYYY-MM-DD HH:mm:ss），提取日期和时间
+  
+  // 如果是日期时间格式（YYYY-MM-DD HH:mm:ss 或 YYYY-MM-DDTHH:mm:ss），只取日期部分
   if (dateTimeStr.includes(' ')) {
-    const [date, time] = dateTimeStr.split(' ');
-    // 只取时和分（HH:mm）
-    const timePart = time ? time.substring(0, 5) : '';
-    return `${date} ${timePart}`;
+    return dateTimeStr.split(' ')[0];
+  }
+  if (dateTimeStr.includes('T')) {
+    return dateTimeStr.split('T')[0];
+  }
+  // 如果已经是日期格式（YYYY-MM-DD），直接返回
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateTimeStr)) {
+    return dateTimeStr;
+  }
+  // 尝试解析为 Date 对象并格式化
+  try {
+    const date = new Date(dateTimeStr);
+    if (!isNaN(date.getTime())) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+  } catch (e) {
+    // 解析失败，返回原值
   }
   return dateTimeStr;
 };
 
-// 格式化时间范围显示
+// 格式化时间范围显示（只显示日期）
 const formatTimeRange = (startTime, endTime) => {
   if (!startTime || !endTime) return '';
   
-  const start = formatDateTime(startTime);
-  const end = formatDateTime(endTime);
-  
-  // 提取日期部分
-  const startDate = start.split(' ')[0];
-  const startTimePart = start.split(' ')[1] || '';
-  const endDate = end.split(' ')[0];
-  const endTimePart = end.split(' ')[1] || '';
+  const startDate = formatDate(startTime);
+  const endDate = formatDate(endTime);
   
   // 如果开始和结束日期相同，只显示一次日期
   if (startDate === endDate) {
-    return `${startDate} ${startTimePart} - ${endTimePart}`;
+    return startDate;
   }
   
-  // 如果日期不同，显示完整的时间范围
-  return `${start} - ${end}`;
+  // 如果日期不同，显示日期范围
+  return `${startDate} - ${endDate}`;
 };
 
 const fetchEvent = async () => {
