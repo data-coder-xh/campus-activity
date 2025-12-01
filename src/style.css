@@ -283,6 +283,128 @@ button {
   padding: 2rem 0;
 }
 
+.profile-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(56, 189, 248, 0.06));
+}
+
+.profile-header__main {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profile-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 30% 0, #eff6ff, #2563eb);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.25rem;
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
+}
+
+.profile-header__meta {
+  min-width: 220px;
+  text-align: right;
+}
+
+.profile-meta-label {
+  margin: 0 0 0.25rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.profile-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.profile-progress__bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.25);
+  overflow: hidden;
+}
+
+.profile-progress__value {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(120deg, #2563eb, #22c55e);
+  transition: width 180ms ease-out;
+}
+
+.profile-progress__text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.profile-meta-sub {
+  margin: 0.3rem 0 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.profile-body {
+  padding: 0.25rem 0 0;
+}
+
+.profile-form {
+  align-items: flex-start;
+}
+
+.profile-tips {
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px dashed #e2e8f0;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.profile-tips h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.9rem;
+  color: #0f172a;
+}
+
+.profile-tips ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.profile-tips li + li {
+  margin-top: 0.2rem;
+}
+
+.profile-form__actions {
+  grid-column: 1 / -1;
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
 @media (max-width: 768px) {
   .app-shell {
     padding: 0 1rem 2rem;
@@ -299,5 +421,23 @@ button {
 
   .app-view {
     padding: 1.25rem;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .profile-header__meta {
+    text-align: left;
+    width: 100%;
+  }
+
+  .profile-form__actions {
+    justify-content: stretch;
+  }
+
+  .profile-form__actions .btn-primary {
+    width: 100%;
   }
 }
