@@ -1,0 +1,49 @@
+{
+  "name": "campus-activity-webhook",
+  "version": "1.0.0",
+  "description": "GitHub Webhook处理器 - 校园活动管理系统",
+  "main": "webhook-server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node webhook-server.js",
+    "dev": "node --watch webhook-server.js",
+    "test": "node test-webhook.js",
+    "test:ping": "node test-webhook.js ping",
+    "test:push": "node test-webhook.js push",
+    "test:pr": "node test-webhook.js pull_request",
+    "test:issue": "node test-webhook.js issues",
+    "test:pr-parsing": "node test-pr-parsing.js",
+    "deploy": "bash deploy.sh",
+    "logs": "tail -f webhook.log",
+    "logs:notify": "tail -f notifications.log",
+    "pr-data": "curl -s http://localhost:3001/pr-data | jq .",
+    "pr-stats": "curl -s http://localhost:3001/pr-stats | jq .",
+    "clean": "rm -f webhook.log notifications.log pr-data.jsonl",
+    "setup": "./setup-env.sh",
+    "install:all": "npm install && chmod +x deploy.sh && chmod +x setup-env.sh"
+  },
+  "keywords": [
+    "github",
+    "webhook",
+    "campus",
+    "activity",
+    "automation",
+    "deployment"
+  ],
+  "author": "校园活动管理系统团队",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-username/campus-activity.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/campus-activity/issues"
+  },
+  "homepage": "https://github.com/your-username/campus-activity#readme"
+}
