@@ -277,148 +277,418 @@ onMounted(fetchEvents);
 </script>
 
 <template>
-  <div>
-    <h2 class="page-title">活动管理</h2>
-    <p class="page-desc">快速创建或下线活动，实时掌握报名进度。</p>
+  <div class="admin-dashboard">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <div class="header-content">
+        <h1 class="page-title">🎯 活动管理中心</h1>
+        <p class="page-desc">高效管理校园活动，实时掌握报名数据，创造精彩校园生活</p>
+      </div>
+    </div>
 
-    <section class="admin-form">
-      <h3>创建新活动</h3>
-      <div class="form-grid">
-        <div class="form-field">
-          <label>标题 *</label>
-          <input v-model="form.title" placeholder="活动标题" />
+    <!-- 统计卡片 -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">📅</div>
+        <div class="stat-content">
+          <div class="stat-number">{{ events.length }}</div>
+          <div class="stat-label">总活动数</div>
         </div>
-        <div class="form-field" style="grid-column: 1 / -1">
-          <label>封面图片</label>
-          <div class="cover-upload-container">
-            <input
-              ref="fileInput"
-              type="file"
-              accept="image/*"
-              style="display: none"
-              @change="handleFileSelect"
-            />
-            <div v-if="form.cover || localImagePreview" class="cover-preview" @click="triggerFileSelect">
-              <img 
-                :src="form.cover || localImagePreview" 
-                alt="封面预览" 
-                @error="handleImageError" 
-                @load="handleImageLoad" 
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-content">
+          <div class="stat-number">{{ events.filter(e => e.status === 1).length }}</div>
+          <div class="stat-label">进行中</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-content">
+          <div class="stat-number">{{ events.reduce((sum, e) => sum + e.currentCount, 0) }}</div>
+          <div class="stat-label">总报名人数</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🎪</div>
+        <div class="stat-content">
+          <div class="stat-number">{{ events.filter(e => new Date(e.endTime) >= new Date()).length }}</div>
+          <div class="stat-label">即将开始</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 创建活动表单 -->
+    <div class="content-section">
+      <div class="section-header">
+        <h2 class="section-title">✨ 创建新活动</h2>
+        <p class="section-desc">发布精彩活动，吸引更多同学参与</p>
+      </div>
+
+      <div class="form-card">
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-label required">活动标题</label>
+            <input v-model="form.title" class="form-input" placeholder="输入富有吸引力的活动标题" />
+          </div>
+          <div class="form-field">
+            <label class="form-label required">活动地点</label>
+            <input v-model="form.place" class="form-input" placeholder="如：信息楼 301" />
+          </div>
+          <div class="form-field">
+            <label class="form-label required">开始日期</label>
+            <input v-model="form.startTime" class="form-input" type="date" />
+          </div>
+          <div class="form-field">
+            <label class="form-label required">结束日期</label>
+            <input v-model="form.endTime" class="form-input" type="date" />
+          </div>
+          <div class="form-field">
+            <label class="form-label required">人数上限</label>
+            <input v-model.number="form.limit" class="form-input" type="number" min="1" placeholder="50" />
+          </div>
+          <div class="form-field full-width">
+            <label class="form-label">活动详情</label>
+            <textarea v-model="form.description" class="form-textarea" rows="4" placeholder="详细描述活动的亮点、内容安排、注意事项等，让同学更清楚活动详情"></textarea>
+          </div>
+          <div class="form-field full-width">
+            <label class="form-label">封面图片</label>
+            <div class="cover-upload-container">
+              <input
+                ref="fileInput"
+                type="file"
+                accept="image/*"
+                style="display: none"
+                @change="handleFileSelect"
               />
-              <div class="cover-overlay">
-                <span class="cover-overlay-text">点击更换图片</span>
+              <div v-if="form.cover || localImagePreview" class="cover-preview" @click="triggerFileSelect">
+                <img
+                  :src="form.cover || localImagePreview"
+                  alt="封面预览"
+                  @error="handleImageError"
+                  @load="handleImageLoad"
+                />
+                <div class="cover-overlay">
+                  <span class="cover-overlay-text">点击更换图片</span>
+                </div>
+                <button type="button" class="btn-remove-cover" @click.stop="handleRemoveImage">移除</button>
               </div>
-              <button type="button" class="btn-remove-cover" @click.stop="handleRemoveImage">移除</button>
+              <div v-else class="cover-upload-placeholder" @click="triggerFileSelect">
+                <div class="upload-icon">📷</div>
+                <p class="upload-title">点击上传封面图片</p>
+                <p class="upload-hint">支持 JPG、PNG 格式，建议尺寸 16:9</p>
+              </div>
             </div>
-            <div v-else class="cover-upload-placeholder" @click="triggerFileSelect">
-              <p>点击上传封面图片</p>
-              <p class="hint">支持 JPG、PNG 格式，建议尺寸 16:9</p>
+          </div>
+          <div class="form-field full-width">
+            <div class="form-actions">
+              <button
+                class="btn-primary"
+                type="button"
+                :disabled="creating"
+                @click="handleCreate"
+              >
+                <span v-if="creating" class="btn-loading">⏳</span>
+                {{ creating ? '正在创建活动...' : '🚀 发布活动' }}
+              </button>
             </div>
           </div>
         </div>
-        <div class="form-field">
-          <label>开始日期 *</label>
-          <input v-model="form.startTime" type="date" />
-        </div>
-        <div class="form-field">
-          <label>结束日期 *</label>
-          <input v-model="form.endTime" type="date" />
-        </div>
-        <div class="form-field">
-          <label>地点 *</label>
-          <input v-model="form.place" placeholder="信息楼 301" />
-        </div>
-        <div class="form-field">
-          <label>人数上限 *</label>
-          <input v-model.number="form.limit" type="number" min="1" />
-        </div>
-        <div class="form-field" style="grid-column: 1 / -1">
-          <label>活动详情</label>
-          <textarea v-model="form.description" rows="4" placeholder="补充活动内容、亮点等"></textarea>
-        </div>
-        <div class="form-field" style="grid-column: 1 / -1">
-          <button 
-            class="btn-primary" 
-            type="button" 
-            :disabled="creating" 
-            @click="handleCreate"
-          >
-            {{ creating ? '正在创建...' : '创建活动' }}
+      </div>
+    </div>
+
+    <!-- 活动列表 -->
+    <div class="content-section">
+      <div class="section-header">
+        <h2 class="section-title">📋 活动列表</h2>
+        <p class="section-desc">管理你创建的所有活动，实时查看报名情况</p>
+      </div>
+
+      <div v-if="loading" class="loading-card">
+        <div class="loading-spinner"></div>
+        <p>正在加载活动数据...</p>
+      </div>
+
+      <div v-else-if="events.length === 0" class="empty-card">
+        <div class="empty-icon">🎭</div>
+        <h3>还没有活动</h3>
+        <p>创建你的第一个精彩活动吧！</p>
+        <div class="empty-action">
+          <button class="btn-primary" @click="$el.scrollIntoView({ behavior: 'smooth' })">
+            创建活动
           </button>
         </div>
       </div>
-    </section>
 
-    <section>
-      <h3>我的活动列表</h3>
-      <p class="page-desc" style="margin-top: 0.5rem; margin-bottom: 1rem; color: #64748b; font-size: 0.9rem;">
-        你只能管理自己创建的活动
-      </p>
-      <div v-if="loading" class="empty-state">加载中...</div>
-      <div v-else-if="events.length === 0" class="empty-state">暂无活动，创建第一个活动吧！</div>
-      <div v-else class="table-wrapper">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>标题</th>
-              <th>时间</th>
-              <th>地点</th>
-              <th>人数</th>
-              <th>状态</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in events" :key="item.id">
-              <td>
-                {{ item.title }}
-                <span v-if="item.creatorName" class="creator-badge">我创建的</span>
-              </td>
-              <td>{{ formatDate(item.startTime) }} ~ {{ formatDate(item.endTime) }}</td>
-              <td>{{ item.place }}</td>
-              <td>{{ item.currentCount }}/{{ item.limit }}</td>
-              <td>
-                <span class="tag" :class="item.status === 1 ? 'approved' : 'rejected'">
-                  {{ item.status === 1 ? '上线' : '下线' }}
+      <div v-else class="events-table-container">
+        <div class="table-header">
+          <div class="table-info">
+            <span class="table-count">共 {{ events.length }} 个活动</span>
+          </div>
+        </div>
+
+        <div class="events-grid">
+          <div v-for="item in events" :key="item.id" class="event-card">
+            <div class="event-header">
+              <div class="event-title-section">
+                <h3 class="event-title">{{ item.title }}</h3>
+                <span class="creator-badge">我创建的</span>
+              </div>
+              <div class="event-status">
+                <span class="status-badge" :class="item.status === 1 ? 'active' : 'inactive'">
+                  {{ item.status === 1 ? '🟢 上线中' : '🔴 已下线' }}
                 </span>
-              </td>
-              <td>
-                <button class="btn-outline" @click="toggleStatus(item)">
-                  {{ item.status === 1 ? '下线' : '上线' }}
-                </button>
-                <button class="ghost-btn" style="margin-left: 0.5rem" @click="removeEvent(item)">删除</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+            </div>
+
+            <div class="event-meta">
+              <div class="meta-item">
+                <span class="meta-icon">📅</span>
+                <span class="meta-text">{{ formatDate(item.startTime) }} ~ {{ formatDate(item.endTime) }}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-icon">📍</span>
+                <span class="meta-text">{{ item.place }}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-icon">👥</span>
+                <span class="meta-text">{{ item.currentCount }}/{{ item.limit }} 人</span>
+              </div>
+            </div>
+
+            <div class="event-actions">
+              <button
+                class="btn-outline"
+                :class="item.status === 1 ? 'btn-danger' : 'btn-success'"
+                @click="toggleStatus(item)"
+              >
+                {{ item.status === 1 ? '下线活动' : '上线活动' }}
+              </button>
+              <button class="btn-ghost" @click="removeEvent(item)">
+                删除活动
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-    </section>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.admin-form {
+.admin-dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* 页面头部 */
+.page-header {
   margin-bottom: 2rem;
-  background: #f8fafc;
-  border-radius: 20px;
+}
+
+.header-content {
+  text-align: center;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.5rem 0;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.page-desc {
+  font-size: 1.1rem;
+  color: #64748b;
+  margin: 0;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* 统计卡片 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 16px;
   padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s ease;
 }
 
-.table-wrapper {
-  overflow-x: auto;
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.12);
 }
 
-.creator-badge {
-  display: inline-block;
-  margin-left: 0.5rem;
-  padding: 0.15rem 0.5rem;
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 500;
+.stat-icon {
+  font-size: 2rem;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border-radius: 12px;
 }
 
+.stat-content {
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+}
+
+/* 内容区块 */
+.content-section {
+  margin-bottom: 2.5rem;
+}
+
+.section-header {
+  margin-bottom: 1.5rem;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 0.5rem 0;
+}
+
+.section-desc {
+  color: #64748b;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* 表单卡片 */
+.form-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(226, 232, 240, 0.5);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-field.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #334155;
+  font-size: 0.95rem;
+}
+
+.form-label.required::after {
+  content: ' *';
+  color: #ef4444;
+}
+
+.form-input,
+.form-textarea {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.875rem 1rem;
+  font: inherit;
+  background: #fafbfc;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: #ffffff;
+}
+
+.form-textarea {
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.875rem 2rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-loading {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 图片上传 */
 .cover-upload-container {
   display: flex;
   flex-direction: column;
@@ -428,23 +698,24 @@ onMounted(fetchEvents);
 .cover-preview {
   position: relative;
   width: 100%;
-  max-width: 500px;
-  min-height: 200px;
+  max-width: 600px;
+  min-height: 250px;
   border-radius: 12px;
   overflow: hidden;
   border: 2px solid #e2e8f0;
   cursor: pointer;
-  transition: border-color 0.2s;
+  transition: all 0.2s ease;
   background: #f8fafc;
 }
 
 .cover-preview:hover {
   border-color: #3b82f6;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.1);
 }
 
 .cover-preview img {
   width: 100%;
-  min-height: 200px;
+  min-height: 250px;
   height: auto;
   display: block;
   object-fit: cover;
@@ -457,12 +728,12 @@ onMounted(fetchEvents);
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s ease;
 }
 
 .cover-preview:hover .cover-overlay {
@@ -473,58 +744,315 @@ onMounted(fetchEvents);
   color: white;
   font-size: 1rem;
   font-weight: 500;
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1.5rem;
   background: rgba(59, 130, 246, 0.9);
-  border-radius: 6px;
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
 }
 
 .btn-remove-cover {
   position: absolute;
-  bottom: 0.5rem;
-  right: 0.5rem;
+  bottom: 1rem;
+  right: 1rem;
   padding: 0.5rem 1rem;
   background: rgba(239, 68, 68, 0.9);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 0.875rem;
-  transition: background 0.2s;
+  font-weight: 500;
+  transition: all 0.2s ease;
   z-index: 10;
+  backdrop-filter: blur(4px);
 }
 
 .btn-remove-cover:hover {
   background: rgba(220, 38, 38, 1);
+  transform: translateY(-1px);
 }
 
 .cover-upload-placeholder {
-  padding: 2rem;
+  padding: 3rem 2rem;
   border: 2px dashed #cbd5e1;
   border-radius: 12px;
   text-align: center;
-  background: #f8fafc;
+  background: linear-gradient(135deg, #fafbfc 0%, #f1f5f9 100%);
   cursor: pointer;
-  transition: border-color 0.2s, background-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .cover-upload-placeholder:hover {
   border-color: #3b82f6;
-  background: #f1f5f9;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
 }
 
-.cover-upload-placeholder p {
-  margin: 0.5rem 0;
+.upload-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.upload-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 0.5rem 0;
+}
+
+.upload-hint {
+  font-size: 0.9rem;
   color: #64748b;
-  transition: color 0.2s;
+  margin: 0;
 }
 
-.cover-upload-placeholder:hover p {
-  color: #3b82f6;
+/* 活动列表 */
+.loading-card,
+.empty-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(226, 232, 240, 0.5);
 }
 
-.cover-upload-placeholder .hint {
-  font-size: 0.875rem;
-  color: #94a3b8;
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e2e8f0;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.empty-card h3 {
+  color: #0f172a;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+}
+
+.empty-card p {
+  color: #64748b;
+  margin: 0 0 1.5rem 0;
+}
+
+.empty-action {
+  margin-top: 1rem;
+}
+
+.events-table-container {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  overflow: hidden;
+}
+
+.table-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fafbfc;
+}
+
+.table-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.table-count {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.events-grid {
+  padding: 1rem;
+}
+
+.event-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  transition: all 0.2s ease;
+}
+
+.event-card:hover {
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+  border-color: #cbd5e1;
+}
+
+.event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.event-title-section {
+  flex: 1;
+}
+
+.event-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.4;
+}
+
+.creator-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  color: #2563eb;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.event-status {
+  flex-shrink: 0;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-badge.active {
+  background: rgba(34, 197, 94, 0.1);
+  color: #15803d;
+}
+
+.status-badge.inactive {
+  background: rgba(239, 68, 68, 0.1);
+  color: #b91c1c;
+}
+
+.event-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.meta-icon {
+  font-size: 1rem;
+}
+
+.event-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn-outline {
+  border: 1.5px solid;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+}
+
+.btn-outline.btn-success {
+  border-color: #22c55e;
+  color: #15803d;
+}
+
+.btn-outline.btn-success:hover {
+  background: #22c55e;
+  color: white;
+}
+
+.btn-outline.btn-danger {
+  border-color: #ef4444;
+  color: #b91c1c;
+}
+
+.btn-outline.btn-danger:hover {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-ghost:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .admin-dashboard {
+    padding: 0 0.5rem;
+  }
+
+  .page-title {
+    font-size: 2rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .form-card {
+    padding: 1.5rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .event-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .event-actions {
+    width: 100%;
+  }
+
+  .btn-outline,
+  .btn-ghost {
+    flex: 1;
+    min-width: 120px;
+  }
 }
 </style>
 
