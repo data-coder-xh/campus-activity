@@ -47,6 +47,7 @@ const formatDate = (dateTimeStr) => {
 const canRegister = computed(() => {
   if (!event.value) return false;
   if (event.value.status === 0) return false;
+  if (event.value.reviewStatus !== 'approved') return false; // 未审核通过的活动不能报名
   if (isRegistered.value) return false; // 已报名则不能再次报名
   if (!event.value.limit) return true;
   return event.value.currentCount < event.value.limit;
@@ -76,10 +77,21 @@ const fetchEvent = async () => {
   loading.value = true;
   try {
     event.value = await getEventDetail(route.params.id);
+    
+    // 如果是学生或未登录用户，检查活动是否已审核通过
+    if (!authStore.isAuthenticated.value || authStore.isStudent.value) {
+      if (event.value.reviewStatus !== 'approved') {
+        toast.error('该活动尚未通过审核，暂不可查看');
+        router.push({ name: 'EventList' });
+        return;
+      }
+    }
+    
     // 获取活动详情后，检查用户是否已报名
     await checkRegistration();
   } catch (err) {
     toast.error(err.response?.data?.message || '未能获取活动详情');
+    router.push({ name: 'EventList' });
   } finally {
     loading.value = false;
   }

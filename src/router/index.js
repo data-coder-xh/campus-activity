@@ -8,6 +8,7 @@ import Login from '../pages/Login.vue';
 import Register from '../pages/Register.vue';
 import AdminDashboard from '../pages/admin/AdminDashboard.vue';
 import AdminRegistrations from '../pages/admin/AdminRegistrations.vue';
+import ReviewDashboard from '../pages/admin/ReviewDashboard.vue';
 import { useAuthStore } from '../services/auth';
 
 const router = createRouter({
@@ -35,13 +36,19 @@ const router = createRouter({
       path: '/admin/events',
       component: AdminDashboard,
       name: 'AdminDashboard',
-      meta: { requiresAdmin: true },
+      meta: { requiresOrganizer: true },
     },
     {
       path: '/admin/registrations',
       component: AdminRegistrations,
       name: 'AdminRegistrations',
-      meta: { requiresAdmin: true },
+      meta: { requiresOrganizer: true },
+    },
+    {
+      path: '/admin/review',
+      component: ReviewDashboard,
+      name: 'ReviewDashboard',
+      meta: { requiresReviewer: true },
     },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
@@ -55,6 +62,24 @@ router.beforeEach((to, from, next) => {
       return next({ name: 'Login', query: { redirect: to.fullPath } });
     }
     if (!store.isAdmin.value) {
+      return next({ name: 'EventList' });
+    }
+  }
+
+  if (to.meta.requiresOrganizer) {
+    if (!store.isAuthenticated.value) {
+      return next({ name: 'Login', query: { redirect: to.fullPath } });
+    }
+    if (!store.isOrganizer.value) {
+      return next({ name: 'EventList' });
+    }
+  }
+
+  if (to.meta.requiresReviewer) {
+    if (!store.isAuthenticated.value) {
+      return next({ name: 'Login', query: { redirect: to.fullPath } });
+    }
+    if (!store.isReviewer.value) {
       return next({ name: 'EventList' });
     }
   }

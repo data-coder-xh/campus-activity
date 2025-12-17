@@ -12,8 +12,11 @@ const loading = ref(false);
 const fetchEvents = async () => {
   loading.value = true;
   try {
+    // 后端会自动过滤，只返回已审核通过的活动（对于学生和未登录用户）
+    // 同时只返回上线的活动（status = 1）
     events.value = await getEvents({ status: 1 });
   } catch (err) {
+    console.error('获取活动列表失败:', err);
     toast.error(err.response?.data?.message || '加载活动失败，请稍后再试');
   } finally {
     loading.value = false;

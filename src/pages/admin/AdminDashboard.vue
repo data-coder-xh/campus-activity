@@ -273,6 +273,24 @@ const removeEvent = async (event) => {
   }
 };
 
+const getReviewStatusText = (status) => {
+  const map = {
+    pending: '待审核',
+    approved: '已通过',
+    rejected: '已拒绝',
+  };
+  return map[status] || status;
+};
+
+const getReviewStatusClass = (status) => {
+  const map = {
+    pending: 'warning',
+    approved: 'approved',
+    rejected: 'rejected',
+  };
+  return map[status] || '';
+};
+
 onMounted(fetchEvents);
 </script>
 
@@ -352,7 +370,7 @@ onMounted(fetchEvents);
     <section>
       <h3>我的活动列表</h3>
       <p class="page-desc" style="margin-top: 0.5rem; margin-bottom: 1rem; color: #64748b; font-size: 0.9rem;">
-        你只能管理自己创建的活动
+        你只能管理自己创建的活动。活动创建后需要等待审核管理员审核通过，才能对学生可见。
       </p>
       <div v-if="loading" class="empty-state">加载中...</div>
       <div v-else-if="events.length === 0" class="empty-state">暂无活动，创建第一个活动吧！</div>
@@ -364,7 +382,8 @@ onMounted(fetchEvents);
               <th>时间</th>
               <th>地点</th>
               <th>人数</th>
-              <th>状态</th>
+              <th>审核状态</th>
+              <th>上线状态</th>
               <th>操作</th>
             </tr>
           </thead>
@@ -378,12 +397,22 @@ onMounted(fetchEvents);
               <td>{{ item.place }}</td>
               <td>{{ item.currentCount }}/{{ item.limit }}</td>
               <td>
+                <span class="tag" :class="getReviewStatusClass(item.reviewStatus)">
+                  {{ getReviewStatusText(item.reviewStatus) }}
+                </span>
+              </td>
+              <td>
                 <span class="tag" :class="item.status === 1 ? 'approved' : 'rejected'">
                   {{ item.status === 1 ? '上线' : '下线' }}
                 </span>
               </td>
               <td>
-                <button class="btn-outline" @click="toggleStatus(item)">
+                <button 
+                  class="btn-outline" 
+                  @click="toggleStatus(item)"
+                  :disabled="item.reviewStatus !== 'approved'"
+                  :title="item.reviewStatus !== 'approved' ? '活动需先通过审核才能上线' : ''"
+                >
                   {{ item.status === 1 ? '下线' : '上线' }}
                 </button>
                 <button class="ghost-btn" style="margin-left: 0.5rem" @click="removeEvent(item)">删除</button>
@@ -417,6 +446,26 @@ onMounted(fetchEvents);
   border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 500;
+}
+
+.tag.warning {
+  background: rgba(251, 191, 36, 0.1);
+  color: #d97706;
+}
+
+.tag.approved {
+  background: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+}
+
+.tag.rejected {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.btn-outline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .cover-upload-container {

@@ -1,10 +1,12 @@
 import { query } from './db.js';
 
 const eventFields =
-  'e.id, e.title, e.cover, e.description, e.start_time AS startTime, e.end_time AS endTime, e.place, e.`limit` AS `limit`, e.status, e.creator_id AS creatorId, e.create_time AS createTime, u.name AS creatorName';
+  'e.id, e.title, e.cover, e.description, e.start_time AS startTime, e.end_time AS endTime, e.place, e.`limit` AS `limit`, e.status, e.review_status AS reviewStatus, e.review_time AS reviewTime, e.reviewer_id AS reviewerId, e.creator_id AS creatorId, e.create_time AS createTime, u.name AS creatorName, r.name AS reviewerName';
 
-export const getEvents = async ({ status, creatorId } = {}) => {
-  let sql = `SELECT ${eventFields} FROM events e LEFT JOIN users u ON e.creator_id = u.id`;
+export const getEvents = async ({ status, creatorId, reviewStatus, onlyApproved } = {}) => {
+  let sql = `SELECT ${eventFields} FROM events e 
+    LEFT JOIN users u ON e.creator_id = u.id 
+    LEFT JOIN users r ON e.reviewer_id = r.id`;
   const params = [];
   const conditions = [];
 
@@ -18,16 +20,29 @@ export const getEvents = async ({ status, creatorId } = {}) => {
     params.push(creatorId);
   }
 
+  if (reviewStatus !== undefined) {
+    conditions.push('e.review_status = ?');
+    params.push(reviewStatus);
+  }
+
+  if (onlyApproved === true) {
+    conditions.push('e.review_status = ?');
+    params.push('approved');
+  }
+
   if (conditions.length > 0) {
     sql += ' WHERE ' + conditions.join(' AND ');
   }
 
-  sql += ' ORDER BY e.start_time ASC';
+  sql += ' ORDER BY e.create_time DESC';
   return query(sql, params);
 };
 
 export const getEventById = async (id) => {
-  const rows = await query(`SELECT ${eventFields} FROM events e LEFT JOIN users u ON e.creator_id = u.id WHERE e.id = ?`, [id]);
+  const rows = await query(`SELECT ${eventFields} FROM events e 
+    LEFT JOIN users u ON e.creator_id = u.id 
+    LEFT JOIN users r ON e.reviewer_id = r.id 
+    WHERE e.id = ?`, [id]);
   return rows[0];
 };
 
@@ -54,8 +69,9 @@ export const createEvent = async (payload) => {
     throw new Error('创建者 ID 必须是有效的正整数');
   }
 
-  const sql = `INSERT INTO events (title, cover, description, start_time, end_time, place, \`limit\`, status, creator_id)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  // 新创建的活动默认状态为待审核
+  const sql = `INSERT INTO events (title, cover, description, start_time, end_time, place, \`limit\`, status, review_status, creator_id)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`;
 
   const result = await query(sql, [
     title,
@@ -91,6 +107,9 @@ export const updateEvent = async (id, payload) => {
     place: 'place',
     limit: '`limit`',
     status: 'status',
+    reviewStatus: 'review_status',
+    reviewTime: 'review_time',
+    reviewerId: 'reviewer_id',
   };
 
   Object.entries(mappings).forEach(([key, column]) => {

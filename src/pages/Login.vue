@@ -28,7 +28,9 @@ const handleSubmit = async () => {
     const redirectTarget = typeof route.query.redirect === 'string' ? route.query.redirect : null;
     if (redirectTarget) {
       router.replace(redirectTarget);
-    } else if (authStore.isAdmin.value) {
+    } else if (authStore.isReviewer.value) {
+      router.replace({ name: 'ReviewDashboard' });
+    } else if (authStore.isOrganizer.value) {
       router.replace({ name: 'AdminDashboard' });
     } else {
       router.replace({ name: 'EventList' });
@@ -44,7 +46,7 @@ const handleSubmit = async () => {
 <template>
   <div class="auth-card">
     <h2>登录账户</h2>
-    <p class="page-desc">使用注册好的账号密码登录，管理员账号拥有额外权限。</p>
+    <p class="page-desc">使用注册好的账号密码登录，不同角色拥有不同的权限。</p>
     <form class="form-field auth-form" @submit.prevent="handleSubmit">
       <label>账号</label>
       <input v-model="form.username" placeholder="请输入账号" />

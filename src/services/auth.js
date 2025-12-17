@@ -41,12 +41,18 @@ const updateUser = (user) => {
 
 const isAuthenticated = computed(() => Boolean(token.value));
 const isAdmin = computed(() => currentUser.value?.role === 'admin');
+const isOrganizer = computed(() => currentUser.value?.role === 'organizer');
+const isReviewer = computed(() => currentUser.value?.role === 'reviewer');
+const isStudent = computed(() => currentUser.value?.role === 'student');
 
 const authStore = {
   token,
   currentUser,
   isAuthenticated,
   isAdmin,
+  isOrganizer,
+  isReviewer,
+  isStudent,
   setSession,
   clearSession,
   updateUser,

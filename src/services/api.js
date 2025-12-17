@@ -34,6 +34,7 @@ export const getEventDetail = (id) => unwrap(client.get(`/events/${id}`));
 export const createEvent = (payload) => unwrap(client.post('/events', payload));
 export const updateEvent = (id, payload) => unwrap(client.put(`/events/${id}`, payload));
 export const updateEventStatus = (id, status) => unwrap(client.patch(`/events/${id}/status`, { status }));
+export const reviewEvent = (id, reviewStatus) => unwrap(client.patch(`/events/${id}/review`, { reviewStatus }));
 export const deleteEvent = (id) => unwrap(client.delete(`/events/${id}`));
 
 export const registerAccount = (payload) => unwrap(client.post('/auth/register', payload));

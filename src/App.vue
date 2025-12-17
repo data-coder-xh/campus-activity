@@ -10,21 +10,26 @@ const authStore = useAuthStore();
 
 const navLinks = [
   { to: '/', label: '活动列表' },
-  { to: '/my/registrations', label: '我的报名', requiresAuth: true },
+  { to: '/my/registrations', label: '我的报名', requiresAuth: true, role: 'student' },
   { to: '/profile', label: '个人信息', requiresAuth: true },
-  { to: '/admin/events', label: '管理员活动', requiresAdmin: true },
-  { to: '/admin/registrations', label: '报名审核', requiresAdmin: true },
+  { to: '/admin/events', label: '我的活动', requiresOrganizer: true },
+  { to: '/admin/registrations', label: '报名管理', requiresOrganizer: true },
+  { to: '/admin/review', label: '活动审核', requiresReviewer: true },
 ];
 
 const visibleNavs = computed(() =>
   navLinks.filter((link) => {
     if (link.requiresAdmin) return authStore.isAdmin.value;
+    if (link.requiresOrganizer) return authStore.isOrganizer.value;
+    if (link.requiresReviewer) return authStore.isReviewer.value;
+    if (link.role && link.role === 'student') return authStore.isStudent.value;
     if (link.requiresAuth) return authStore.isAuthenticated.value;
     return true;
   })
 );
 
 const isAdminRoute = computed(() => route.path.startsWith('/admin'));
+const isReviewRoute = computed(() => route.path.startsWith('/admin/review'));
 const currentUserName = computed(
   () => authStore.currentUser.value?.name || authStore.currentUser.value?.username
 );
@@ -65,11 +70,21 @@ const handleLogout = () => {
     <main class="app-main">
       <section class="hero" :class="{ 'hero--admin': isAdminRoute }">
         <div>
-          <p class="hero__eyebrow">{{ isAdminRoute ? '管理后台' : '学生端功能' }}</p>
-          <h1>{{ isAdminRoute ? '活动与报名管理' : '发现校园精彩活动' }}</h1>
+          <p class="hero__eyebrow">
+            {{ isReviewRoute ? '审核管理' : isAdminRoute ? '活动管理' : '学生端功能' }}
+          </p>
+          <h1>
+            {{ isReviewRoute 
+              ? '活动审核管理' 
+              : isAdminRoute 
+              ? '活动与报名管理' 
+              : '发现校园精彩活动' }}
+          </h1>
           <p>
-            {{ isAdminRoute
-              ? '发布、编辑与审核报名，实时掌握活动动态。'
+            {{ isReviewRoute
+              ? '审核活动发布者提交的活动，通过后活动将对学生可见。'
+              : isAdminRoute
+              ? '发布、编辑活动，实时掌握活动动态和报名情况。'
               : '浏览活动、了解详情、快速报名，并随时查看报名状态。' }}
           </p>
         </div>

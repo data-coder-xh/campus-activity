@@ -37,3 +37,33 @@ export const requireAdmin = (req, res, next) => {
   next();
 };
 
+export const requireOrganizer = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ message: '未登录' });
+  }
+  if (req.user.role !== 'organizer') {
+    return res.status(403).json({ message: '仅活动发布者可执行此操作' });
+  }
+  next();
+};
+
+export const requireReviewer = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ message: '未登录' });
+  }
+  if (req.user.role !== 'reviewer') {
+    return res.status(403).json({ message: '仅审核管理员可执行此操作' });
+  }
+  next();
+};
+
+export const requireOrganizerOrReviewer = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ message: '未登录' });
+  }
+  if (req.user.role !== 'organizer' && req.user.role !== 'reviewer') {
+    return res.status(403).json({ message: '仅活动发布者或审核管理员可执行此操作' });
+  }
+  next();
+};
+
