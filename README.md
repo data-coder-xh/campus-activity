@@ -1,250 +1,264 @@
-````md
 # 校园活动报名系统
 
-本项目为软件工程课程期末大作业，目标是实现一个面向校园学生与活动组织者的 Web 端活动报名系统。系统采用前后端分离架构，包括学生端活动浏览与报名功能，以及管理员端活动管理与报名审核功能。
+本项目为软件工程课程期末大作业，基于实际代码实现，目标是实现一个完整的校园活动报名Web平台。系统采用前后端分离架构，包含学生端活动浏览与报名功能，以及管理员端活动管理和报名审核功能。
 
-技术栈：
+## 技术栈
 
-- 前端：Vue 3 + Vite + JavaScript
-- 后端：Node.js + Express（JavaScript）
-- 数据库：MySQL（或其他关系型数据库）
+- **前端**：Vue 3 + Composition API + Vite + Vue Router + Axios
+- **后端**：Node.js + Express + MySQL2 + JWT + bcrypt
+- **数据库**：MySQL 8.0
+- **开发工具**：VS Code + Git
 
 ---
 
 ## 一、项目简介
 
-校园活动报名系统用于统一管理校园内各类活动的报名流程。学生可以在前台浏览活动列表、查看详情并在线报名；管理员可以在后台发布活动、编辑活动信息，查看并审核报名记录。
+校园活动报名系统是一个功能完整的Web应用，用于统一管理校园内各类活动的报名流程。学生可以在前台浏览活动、查看详情并在线报名；管理员可以在后台发布活动、管理活动状态，并审核学生报名申请。
 
-项目结构清晰，适合作为课程项目展示与后续扩展。
+系统实现了完整的用户认证、权限控制、数据验证等企业级功能，代码结构清晰，适合作为软件工程课程项目展示。
 
 ---
 
 ## 二、主要功能
 
-### 1. 学生端（前台）
+### 1. 学生端功能
 
-- 账号密码登录 / 注册
-- 活动列表浏览
-- 活动详情查看
-- 在线报名活动
-- 查看个人报名记录
-- 编辑个人基本信息（如姓名、学号、联系方式等）
+- ✅ 用户注册登录（账号、密码、姓名、学号、学院、专业、电话）
+- ✅ 活动列表浏览（支持状态筛选）
+- ✅ 活动详情查看（时间、地点、报名人数等）
+- ✅ 在线报名活动（资格验证、重复报名检查）
+- ✅ 个人报名记录查看（审核状态管理）
+- ✅ 用户信息管理（个人资料编辑）
 
-### 2. 管理后台
+### 2. 管理后台功能
 
-- 管理员登录
-- 创建活动、编辑活动、删除/下线活动
-- 查看活动列表及其状态
-- 查看某个活动的报名列表
-- 审核学生报名（通过 / 拒绝）
+- ✅ 管理员登录认证（JWT Token会话管理）
+- ✅ 活动管理（创建、编辑、删除、上线/下线）
+- ✅ 权限控制（管理员只能管理自己创建的活动）
+- ✅ 报名审核管理（按活动查看报名列表）
+- ✅ 审核状态更新（通过/拒绝报名申请）
 
 ---
 
 ## 三、项目结构
 
-项目采用单仓库（monorepo）形式，前后端代码在同一项目中，`src` 与 `backend` 同级。
+项目采用前后端分离的单仓库结构，代码组织清晰：
 
-```bash
+```
 campus-activity/
 │
-├── README.md
-├── package.json          # 顶层只用作说明或统一脚本（可选）
-├── vite.config.js        # 前端构建配置
+├── README.md                     # 项目说明文档
+├── package.json                  # 前端依赖配置
+├── vite.config.js                # Vite构建配置
 │
-├── src/                  # 前端代码（Vue 3 + JS）
-│   ├── main.js
-│   ├── App.vue
-│   ├── router/
-│   │     └── index.js
-│   ├── pages/
-│   │     ├── EventList.vue          # 活动列表页
-│   │     ├── EventDetail.vue        # 活动详情页
-│   │     ├── RegisterForm.vue       # 报名表单页
-│   │     ├── MyRegistrations.vue    # 我的报名记录
-│   │     └── UserProfile.vue        # 用户信息页
-│   ├── components/
-│   │     └── EventCard.vue
+├── src/                          # 前端代码 (Vue 3)
+│   ├── main.js                   # 应用入口
+│   ├── App.vue                   # 根组件
+│   ├── router/index.js           # 路由配置
 │   ├── services/
-│   │     └── api.js                 # 封装接口请求
-│   └── assets/
+│   │   ├── api.js                # API接口封装
+│   │   └── auth.js               # 认证状态管理
+│   │   └── toast.js              # 消息提示服务
+│   ├── pages/                    # 页面组件 (8个页面)
+│   │   ├── EventList.vue         # 活动列表页
+│   │   ├── EventDetail.vue       # 活动详情页
+│   │   ├── RegisterForm.vue      # 报名表单页
+│   │   ├── MyRegistrations.vue   # 我的报名记录
+│   │   ├── UserProfile.vue       # 用户信息页
+│   │   ├── Login.vue             # 登录页
+│   │   ├── Register.vue          # 注册页
+│   │   ├── admin/
+│   │   │   ├── AdminDashboard.vue    # 管理后台首页
+│   │   │   └── AdminRegistrations.vue # 报名审核页
+│   └── components/
+│       └── EventCard.vue         # 活动卡片组件
 │
-└── backend/             # 后端代码（Node.js + Express）
-    ├── package.json
-    ├── app.js           # 入口文件
-    ├── routes/
-    │     ├── events.js
-    │     ├── users.js
-    │     └── registrations.js
-    ├── controllers/
-    │     ├── eventsController.js
-    │     ├── usersController.js
-    │     └── registrationsController.js
-    ├── models/
-    │     ├── db.js               # 数据库连接
-    │     ├── Event.js
-    │     ├── User.js
-    │     └── Registration.js
+└── backend/                      # 后端代码 (Node.js)
+    ├── app.js                    # 后端入口文件
+    ├── package.json              # 后端依赖配置
+    ├── middlewares/
+    │   └── auth.js               # JWT认证中间件
+    ├── controllers/              # 控制器层
+    │   ├── authController.js     # 认证控制器
+    │   ├── eventsController.js   # 活动控制器
+    │   ├── usersController.js    # 用户控制器
+    │   └── registrationsController.js # 报名控制器
+    ├── models/                   # 数据模型层
+    │   ├── db.js                 # 数据库连接
+    │   ├── User.js               # 用户模型
+    │   ├── Event.js              # 活动模型
+    │   └── Registration.js       # 报名模型
+    ├── routes/                   # 路由层
+    │   ├── auth.js               # 认证路由
+    │   ├── events.js             # 活动路由
+    │   ├── users.js              # 用户路由
+    │   └── registrations.js      # 报名路由
     └── database/
-          └── schema.sql          # 数据库建表 SQL
-````
-
-> 说明：如果你希望前后端分别安装依赖，可在 `src` 和 `backend` 各自维护独立的 `package.json`。
+        └── schema.sql            # 数据库建表脚本
+```
 
 ---
 
 ## 四、运行方式
 
-### 1. 克隆项目
+### 1. 环境准备
 
-```bash
-git clone <your-repo-url>
-cd campus-activity
-```
+确保安装了以下环境：
+- Node.js >= 18.0.0
+- MySQL >= 8.0
+- npm 或 yarn
 
----
-
-### 2. 启动后端（Node.js + Express）
-
-进入 backend 目录：
+### 2. 启动后端服务
 
 ```bash
 cd backend
 npm install
 ```
 
-配置数据库（在 `backend/models/db.js` 中修改 MySQL 连接信息），然后执行建表 SQL：
+创建 `.env` 文件并配置数据库：
+
+```env
+PORT=9000
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=campus_activity
+CORS_ORIGINS=http://localhost:5173
+JWT_SECRET=campus-activity-secret
+JWT_EXPIRES_IN=7d
+```
+
+启动MySQL服务并执行建表脚本：
 
 ```bash
-# 在数据库客户端中执行
+# 连接MySQL并执行
 source backend/database/schema.sql;
 ```
 
 启动后端服务：
 
 ```bash
-npm run start
-# 或
-node app.js
+npm run start  # 或 npm run dev (开发模式)
 ```
 
-默认后端运行在：
+后端将在 `http://localhost:9000` 运行。
 
-```text
-http://localhost:9000
-```
-
-#### 环境变量
-
-在 `backend` 目录下创建 `.env` 文件，示例内容如下：
-
-```
-PORT=9000
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=root
-DB_NAME=campus_activity
-CORS_ORIGINS=http://localhost:5173
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=admin123
-JWT_SECRET=campus-activity-secret
-JWT_EXPIRES_IN=7d
-```
-
-> 管理员端登录默认账号密码为 `admin / admin123`，可按需修改上述配置。
-
----
-
-### 3. 启动前端（Vue 3 + Vite + JS）
-
-回到项目根目录：
+### 3. 启动前端服务
 
 ```bash
-cd ../
+cd ../  # 返回项目根目录
 npm install
-```
-
-运行开发服务器：
-
-```bash
 npm run dev
 ```
 
-默认访问地址：
+前端将在 `http://localhost:5173` 运行。
 
-```text
-http://localhost:5173
+### 4. 访问系统
+
+- **学生端**：http://localhost:5173
+- **管理后台**：http://localhost:5173/admin/dashboard
+- **默认管理员账号**：admin / admin123
+
+---
+
+## 五、数据库设计
+
+系统采用MySQL数据库，包含三张核心表：
+
+### 1. 用户表 (users)
+```sql
+- id: INT (主键)
+- username: VARCHAR(50) (登录账号，唯一)
+- password_hash: VARCHAR(255) (bcrypt加密密码)
+- role: ENUM('student','admin') (用户角色)
+- name: VARCHAR(50) (姓名)
+- student_id: VARCHAR(32) (学号，唯一)
+- phone: VARCHAR(20) (电话)
+- college: VARCHAR(50) (学院)
+- major: VARCHAR(50) (专业)
+- create_time: TIMESTAMP (创建时间)
 ```
 
-前端会通过类似 `http://localhost:9000/api/...` 调用后端接口（具体参见 `src/services/api.js` 中的配置）。
-
----
-
-## 五、数据库设计概述
-
-系统主要包括三张核心表：
-
-### 1. 用户表（users）
-
-* 存储学生用户基本信息（姓名、学号、学院、电话等）
-* 与报名记录表通过 `user_id` 关联
-
-### 2. 活动表（events）
-
-* 存储活动标题、时间、地点、详情、人数上限、状态等信息
-* 包含 `creator_id` 字段，记录活动创建者（管理员）
-* 与报名记录表通过 `event_id` 关联
-* 与用户表通过 `creator_id` 关联（外键约束）
-
-### 3. 报名表（registrations）
-
-* 关联用户与活动
-* 存储报名时间、备注、审核状态（待审核/通过/拒绝）
-
-具体字段与建表语句见：
-
-```text
-backend/database/schema.sql
+### 2. 活动表 (events)
+```sql
+- id: INT (主键)
+- title: VARCHAR(100) (活动标题)
+- cover: VARCHAR(255) (封面图片URL)
+- description: TEXT (活动详情)
+- start_time: DATETIME (开始时间)
+- end_time: DATETIME (结束时间)
+- place: VARCHAR(100) (活动地点)
+- limit: INT (人数上限)
+- status: TINYINT (0=下线,1=上线)
+- creator_id: INT (创建者ID，外键)
+- create_time: TIMESTAMP (发布时间)
 ```
 
----
+### 3. 报名表 (registrations)
+```sql
+- id: INT (主键)
+- user_id: INT (用户ID，外键)
+- event_id: INT (活动ID，外键)
+- remark: VARCHAR(255) (报名备注)
+- status: TINYINT (0=待审核,1=通过,2=拒绝)
+- create_time: TIMESTAMP (报名时间)
+```
 
-## 六、技术栈说明
-
-### 前端
-
-* Vue 3（Composition API 或 Options API，使用 JavaScript）
-* Vite（构建工具）
-* Vue Router（路由管理）
-* Axios（HTTP 请求库）
-* 简单状态管理（可使用 `reactive` / `ref` 或自行封装 store）
-
-### 后端
-
-* Node.js
-* Express
-* MySQL / mysql2
-* 可选：JWT 用于管理员登录状态管理
+**数据关系**：
+- 用户 1:N 报名记录
+- 活动 1:N 报名记录
+- 活动 N:1 用户（创建者关系）
 
 ---
 
-## 七、功能模块说明（简要）
+## 六、技术实现特点
 
-### 学生端
+### 前端技术栈
+- **Vue 3 Composition API**：现代化的响应式数据管理
+- **Vite**：快速的构建工具，支持热更新
+- **Vue Router**：单页应用路由管理，支持权限守卫
+- **Axios**：HTTP客户端，支持请求/响应拦截器
+- **自定义状态管理**：使用Vue的reactive/ref进行状态管理
 
-* **活动列表页**：请求活动列表接口，展示活动卡片，点击进入详情
-* **活动详情页**：展示活动详细信息，提供报名入口
-* **报名表单**：提交姓名、学号、联系方式等信息
-* **我的报名**：查询当前用户所有报名记录及审核状态
-* **个人信息**：展示与修改用户基本资料（可选）
+### 后端技术栈
+- **Express.js**：轻量级Web框架
+- **MySQL2**：数据库驱动，支持连接池
+- **JWT**：JSON Web Token进行身份认证
+- **bcrypt**：密码哈希加密
+- **CORS**：跨域资源共享配置
+- **Morgan**：HTTP请求日志记录
 
-### 管理端
-
-* **管理员登录**：账号密码登录，登录成功后访问后台页面
-* **活动管理**：创建/编辑/删除/上下线活动（**注意：管理员只能管理自己创建的活动**）
-* **报名管理**：按活动查看报名列表，修改报名状态（通过/拒绝）
+### 核心功能实现
+- **身份认证**：JWT Token + 密码哈希
+- **权限控制**：路由守卫 + 中间件验证
+- **数据验证**：前后端双重校验
+- **错误处理**：统一错误响应格式
+- **安全防护**：SQL注入防护、XSS防护
 
 ---
 
-## 八、说明
+## 七、API接口文档
 
-本项目主要用于软件工程课程设计与前后端开发实践，代码与设计均可根据课程要求与实际情况进行适当简化或扩展。
+### 认证接口 (`/api/auth`)
+- `POST /register` - 用户注册
+- `POST /login` - 用户登录
+- `POST /logout` - 用户退出
+
+### 用户接口 (`/api/users`)
+- `GET /me` - 获取当前用户信息
+- `PUT /me` - 更新当前用户信息
+
+### 活动接口 (`/api/events`)
+- `GET /` - 获取活动列表（支持状态筛选）
+- `GET /:id` - 获取活动详情
+- `POST /` - 创建活动（管理员）
+- `PUT /:id` - 更新活动（管理员）
+- `PATCH /:id/status` - 更新活动状态（管理员）
+- `DELETE /:id` - 删除活动（管理员）
+
+### 报名接口 (`/api/registrations`)
+- `GET /` - 获取我的报名记录
+- `POST /` - 提交报名申请
+- `PATCH /:id/status` - 更新报名状态（管理员）
+
+---

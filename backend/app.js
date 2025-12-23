@@ -7,6 +7,7 @@ import eventsRouter from './routes/events.js';
 import usersRouter from './routes/users.js';
 import registrationsRouter from './routes/registrations.js';
 import authRouter from './routes/auth.js';
+import testRouter from './routes/test.js';
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/events', eventsRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/registrations', registrationsRouter);
+app.use('/api/test', testRouter);
 
 app.use((req, res, next) => {
   res.status(404).json({ message: '资源不存在' });
@@ -64,9 +66,12 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Backend server listening on port ${PORT}`);
-});
+// 测试环境下不启动监听端口，方便 Jest/Supertest 直接 import app 进行接口测试
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`Backend server listening on port ${PORT}`);
+  });
+}
 
 export default app;
 
