@@ -1,7 +1,7 @@
 import { query } from './db.js';
 
 const eventFields =
-  'e.id, e.title, e.cover, e.description, e.start_time AS startTime, e.end_time AS endTime, e.place, e.`limit` AS `limit`, e.status, e.creator_id AS creatorId, e.create_time AS createTime, u.name AS creatorName';
+  'e.id, e.title, e.cover, e.description, e.start_time AS startTime, e.end_time AS endTime, e.place, e.`limit` AS `limit`, e.status, e.allowed_colleges AS allowedColleges, e.allowed_grades AS allowedGrades, e.creator_id AS creatorId, e.create_time AS createTime, u.name AS creatorName';
 
 export const getEvents = async ({ status, creatorId } = {}) => {
   let sql = `SELECT ${eventFields} FROM events e LEFT JOIN users u ON e.creator_id = u.id`;
@@ -41,6 +41,8 @@ export const createEvent = async (payload) => {
     place,
     limit,
     status = 1,
+    allowedColleges,
+    allowedGrades,
     creatorId,
   } = payload;
 
@@ -54,8 +56,8 @@ export const createEvent = async (payload) => {
     throw new Error('创建者 ID 必须是有效的正整数');
   }
 
-  const sql = `INSERT INTO events (title, cover, description, start_time, end_time, place, \`limit\`, status, creator_id)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  const sql = `INSERT INTO events (title, cover, description, start_time, end_time, place, \`limit\`, status, allowed_colleges, allowed_grades, creator_id)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
   const result = await query(sql, [
     title,
@@ -66,6 +68,8 @@ export const createEvent = async (payload) => {
     place,
     limit || 0,
     status,
+    allowedColleges || '',
+    allowedGrades || '',
     numericCreatorId, // 确保是正整数类型
   ]);
 
@@ -91,6 +95,8 @@ export const updateEvent = async (id, payload) => {
     place: 'place',
     limit: '`limit`',
     status: 'status',
+    allowedColleges: 'allowed_colleges',
+    allowedGrades: 'allowed_grades',
   };
 
   Object.entries(mappings).forEach(([key, column]) => {
@@ -111,4 +117,3 @@ export const updateEvent = async (id, payload) => {
 export const deleteEvent = async (id) => {
   await query('DELETE FROM events WHERE id = ?', [id]);
 };
-

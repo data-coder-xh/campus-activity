@@ -1,11 +1,12 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue';
-import { deleteEvent, getEvents, createEvent, updateEventStatus } from '../../services/api';
+import { deleteEvent, getEvents, createEvent, updateEvent, updateEventStatus } from '../../services/api';
 import toast from '../../services/toast';
 
 const events = ref([]);
 const loading = ref(false);
 const creating = ref(false);
+const editingId = ref(null);
 
 const form = reactive({
   title: '',
@@ -15,6 +16,8 @@ const form = reactive({
   endTime: '',
   place: '',
   limit: 50,
+  allowedColleges: '',
+  allowedGrades: '',
 });
 
 // 图片上传相关状态
@@ -60,8 +63,11 @@ const resetForm = () => {
   form.endTime = '';
   form.place = '';
   form.limit = 50;
+  form.allowedColleges = '';
+  form.allowedGrades = '';
   imageFile.value = null;
   localImagePreview.value = null;
+  editingId.value = null;
   if (fileInput.value) {
     fileInput.value.value = '';
   }
@@ -159,7 +165,30 @@ const fetchEvents = async () => {
   }
 };
 
-const handleCreate = async () => {
+const applyEventToForm = (item) => {
+  form.title = item.title || '';
+  form.cover = item.cover || '';
+  form.description = item.description || '';
+  form.startTime = formatDate(item.startTime);
+  form.endTime = formatDate(item.endTime);
+  form.place = item.place || '';
+  form.limit = item.limit || 0;
+  form.allowedColleges = item.allowedColleges || '';
+  form.allowedGrades = item.allowedGrades || '';
+  imageFile.value = null;
+  localImagePreview.value = null;
+  if (fileInput.value) {
+    fileInput.value.value = '';
+  }
+};
+
+const startEdit = (item) => {
+  editingId.value = item.id;
+  applyEventToForm(item);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+const handleSubmit = async () => {
   // 字段名称映射
   const fieldNames = {
     title: '标题',
@@ -220,7 +249,7 @@ const handleCreate = async () => {
 
   // 所有验证通过，开始创建活动
   creating.value = true;
-  const creatingToastId = toast.info('正在创建活动...', 0); // duration 为 0 表示不自动消失
+  const creatingToastId = toast.info(editingId.value ? '正在更新活动...' : '正在创建活动...', 0); // duration 为 0 表示不自动消失
 
   try {
     // 如果有选择的图片文件，先上传图片
@@ -238,15 +267,18 @@ const handleCreate = async () => {
       }
     }
 
-    // 创建活动
-    await createEvent(form);
+    if (editingId.value) {
+      await updateEvent(editingId.value, form);
+    } else {
+      await createEvent(form);
+    }
     toast.removeToast(creatingToastId); // 移除"正在创建"的提示
-    toast.success('活动已创建');
+    toast.success(editingId.value ? '活动已更新' : '活动已创建');
     resetForm();
     await fetchEvents();
   } catch (err) {
     toast.removeToast(creatingToastId); // 移除"正在创建"的提示
-    toast.error(err.response?.data?.message || '创建失败');
+    toast.error(err.response?.data?.message || (editingId.value ? '更新失败' : '创建失败'));
   } finally {
     creating.value = false;
   }
@@ -271,6 +303,10 @@ const removeEvent = async (event) => {
   } catch (err) {
     toast.error(err.response?.data?.message || '删除失败');
   }
+};
+
+const cancelEdit = () => {
+  resetForm();
 };
 
 onMounted(fetchEvents);
@@ -321,8 +357,10 @@ onMounted(fetchEvents);
     <!-- 创建活动表单 -->
     <div class="content-section">
       <div class="section-header">
-        <h2 class="section-title">✨ 创建新活动</h2>
-        <p class="section-desc">发布精彩活动，吸引更多同学参与</p>
+        <h2 class="section-title">✨ {{ editingId ? '编辑活动' : '创建新活动' }}</h2>
+        <p class="section-desc">
+          {{ editingId ? '更新活动信息与报名限制' : '发布精彩活动，吸引更多同学参与' }}
+        </p>
       </div>
 
       <div class="form-card">
@@ -346,6 +384,22 @@ onMounted(fetchEvents);
           <div class="form-field">
             <label class="form-label required">人数上限</label>
             <input v-model.number="form.limit" class="form-input" type="number" min="1" placeholder="50" />
+          </div>
+          <div class="form-field">
+            <label class="form-label">限制学院</label>
+            <input
+              v-model="form.allowedColleges"
+              class="form-input"
+              placeholder="例如：计算机学院,机械学院"
+            />
+          </div>
+          <div class="form-field">
+            <label class="form-label">限制年级</label>
+            <input
+              v-model="form.allowedGrades"
+              class="form-input"
+              placeholder="例如：2022,2023"
+            />
           </div>
           <div class="form-field full-width">
             <label class="form-label">活动详情</label>
@@ -386,10 +440,19 @@ onMounted(fetchEvents);
                 class="btn-primary"
                 type="button"
                 :disabled="creating"
-                @click="handleCreate"
+                @click="handleSubmit"
               >
                 <span v-if="creating" class="btn-loading">⏳</span>
-                {{ creating ? '正在创建活动...' : '🚀 发布活动' }}
+                {{ creating ? (editingId ? '正在更新活动...' : '正在创建活动...') : (editingId ? '✅ 保存修改' : '🚀 发布活动') }}
+              </button>
+              <button
+                v-if="editingId"
+                class="btn-ghost"
+                type="button"
+                :disabled="creating"
+                @click="cancelEdit"
+              >
+                取消编辑
               </button>
             </div>
           </div>
@@ -457,6 +520,9 @@ onMounted(fetchEvents);
             </div>
 
             <div class="event-actions">
+              <button class="btn-outline" @click="startEdit(item)">
+                编辑活动
+              </button>
               <button
                 class="btn-outline"
                 :class="item.status === 1 ? 'btn-danger' : 'btn-success'"
@@ -1055,4 +1121,3 @@ onMounted(fetchEvents);
   }
 }
 </style>
-

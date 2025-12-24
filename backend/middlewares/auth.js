@@ -27,6 +27,25 @@ export const requireAuth = async (req, res, next) => {
   }
 };
 
+export const optionalAuth = async (req, res, next) => {
+  const authHeader = req.headers.authorization || '';
+  const [, token] = authHeader.split(' ');
+  if (!token) {
+    return next();
+  }
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    const user = await UserModel.getUserById(payload.sub || payload.id);
+    if (user) {
+      req.user = user;
+    }
+    return next();
+  } catch (error) {
+    const message = error.name === 'TokenExpiredError' ? '登录状态已过期，请重新登录' : '令牌无效';
+    return res.status(401).json({ message });
+  }
+};
+
 export const requireAdmin = (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({ message: '未登录' });
@@ -36,4 +55,3 @@ export const requireAdmin = (req, res, next) => {
   }
   next();
 };
-

@@ -1,4 +1,4 @@
-# 校园活动报名系统
+# 校园活动报名系统 说明文档
 
 本项目为软件工程课程期末大作业，基于实际代码实现，目标是实现一个完整的校园活动报名Web平台。系统采用前后端分离架构，包含学生端活动浏览与报名功能，以及管理员端活动管理和报名审核功能。
 
@@ -33,7 +33,7 @@
 ### 2. 管理后台功能
 
 - ✅ 管理员登录认证（JWT Token会话管理）
-- ✅ 活动管理（创建、编辑、删除、上线/下线）
+- ✅ 活动管理（创建、编辑、删除、上线/下线，支持限制学院/年级）
 - ✅ 权限控制（管理员只能管理自己创建的活动）
 - ✅ 报名审核管理（按活动查看报名列表）
 - ✅ 审核状态更新（通过/拒绝报名申请）
@@ -50,6 +50,7 @@ campus-activity/
 ├── README.md                     # 项目说明文档
 ├── package.json                  # 前端依赖配置
 ├── vite.config.js                # Vite构建配置
+├── index.html                    # 前端入口 HTML
 │
 ├── src/                          # 前端代码 (Vue 3)
 │   ├── main.js                   # 应用入口
@@ -59,7 +60,7 @@ campus-activity/
 │   │   ├── api.js                # API接口封装
 │   │   └── auth.js               # 认证状态管理
 │   │   └── toast.js              # 消息提示服务
-│   ├── pages/                    # 页面组件 (8个页面)
+│   ├── pages/                    # 页面组件 (9个页面)
 │   │   ├── EventList.vue         # 活动列表页
 │   │   ├── EventDetail.vue       # 活动详情页
 │   │   ├── RegisterForm.vue      # 报名表单页
@@ -68,10 +69,13 @@ campus-activity/
 │   │   ├── Login.vue             # 登录页
 │   │   ├── Register.vue          # 注册页
 │   │   ├── admin/
-│   │   │   ├── AdminDashboard.vue    # 管理后台首页
-│   │   │   └── AdminRegistrations.vue # 报名审核页
+│   │   │   ├── AdminDashboard.vue     # 管理后台活动管理
+│   │   │   ├── AdminRegistrations.vue # 报名审核页
+│   │   │   └── AdminLogin.vue         # 管理员登录页（备用）
 │   └── components/
-│       └── EventCard.vue         # 活动卡片组件
+│       ├── EventCard.vue         # 活动卡片组件
+│       ├── Toast.vue             # 消息提示组件
+│       └── ToastContainer.vue    # 消息容器
 │
 └── backend/                      # 后端代码 (Node.js)
     ├── app.js                    # 后端入口文件
@@ -123,6 +127,7 @@ DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=your_password
 DB_NAME=campus_activity
+DB_POOL_SIZE=10
 CORS_ORIGINS=http://localhost:5173
 JWT_SECRET=campus-activity-secret
 JWT_EXPIRES_IN=7d
@@ -153,11 +158,20 @@ npm run dev
 
 前端将在 `http://localhost:5173` 运行。
 
-### 4. 访问系统
+### 4. 可选的前端环境变量
+
+前端默认请求 `http://localhost:9000/api`，如需修改可在根目录创建 `.env`：
+
+```env
+VITE_API_BASE_URL=http://localhost:9000/api
+```
+
+### 5. 访问系统
 
 - **学生端**：http://localhost:5173
-- **管理后台**：http://localhost:5173/admin/dashboard
-- **默认管理员账号**：admin / admin123
+- **管理后台**：http://localhost:5173/admin/events
+- **报名审核页**：http://localhost:5173/admin/registrations
+- **默认管理员账号**：admin / admin123（见 `backend/database/schema.sql` 里的初始化数据）
 
 ---
 
@@ -239,10 +253,14 @@ npm run dev
 
 ## 七、API接口文档
 
+统一前缀：`/api`，所有需要登录的接口都要求 `Authorization: Bearer <token>`。
+
+### 健康检查
+- `GET /health` - 服务健康状态
+
 ### 认证接口 (`/api/auth`)
 - `POST /register` - 用户注册
 - `POST /login` - 用户登录
-- `POST /logout` - 用户退出
 
 ### 用户接口 (`/api/users`)
 - `GET /me` - 获取当前用户信息
@@ -262,3 +280,29 @@ npm run dev
 - `PATCH /:id/status` - 更新报名状态（管理员）
 
 ---
+
+## 八、测试说明
+
+后端提供了基于 Jest + Supertest 的接口测试用例（6个用例），并包含测试环境数据清理接口：
+
+```bash
+cd backend
+npm run test
+```
+
+说明：
+- 测试环境下启用 `DELETE /api/test/cleanup` 清理测试数据
+- `npm run test:watch` 可用于本地调试
+
+---
+
+## 九、常见问题
+
+1. **后端报 CORS 错误**  
+   检查 `CORS_ORIGINS` 是否包含前端地址（可用逗号分隔多个域名）。
+
+2. **无法登录管理员**  
+   请确认已执行 `backend/database/schema.sql`，并使用 `admin / admin123` 登录。
+
+3. **数据库连接失败**  
+   确认 `.env` 中的数据库账号、密码和库名与本地 MySQL 一致。

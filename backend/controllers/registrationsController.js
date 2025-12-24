@@ -29,6 +29,31 @@ export const createRegistration = async (req, res, next) => {
       return res.status(400).json({ message: '该活动不可报名' });
     }
 
+    const parseList = (value) =>
+      String(value || '')
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+    const allowedColleges = parseList(event.allowedColleges);
+    const allowedGrades = parseList(event.allowedGrades);
+
+    if (allowedColleges.length > 0) {
+      const userCollege = (req.user.college || '').trim();
+      if (!userCollege || !allowedColleges.includes(userCollege)) {
+        return res.status(403).json({ message: '不符合活动报名资格（学院限制）' });
+      }
+    }
+
+    if (allowedGrades.length > 0) {
+      const studentId = String(req.user.studentId || '');
+      const gradeMatch = studentId.match(/^(\d{4})/);
+      const userGrade = gradeMatch ? gradeMatch[1] : '';
+      if (!userGrade || !allowedGrades.includes(userGrade)) {
+        return res.status(403).json({ message: '不符合活动报名资格（年级限制）' });
+      }
+    }
+
     const existing = await RegistrationModel.findExisting(req.user.id, eventId);
     if (existing && existing.status !== 2) {
       return res.status(409).json({ message: '已提交报名，请勿重复报名' });
@@ -68,4 +93,3 @@ export const updateRegistrationStatus = async (req, res, next) => {
     next(error);
   }
 };
-

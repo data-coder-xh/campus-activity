@@ -52,6 +52,14 @@ const canRegister = computed(() => {
   return event.value.currentCount < event.value.limit;
 });
 
+const formatRestrictions = (value) => {
+  const list = String(value || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+  return list.length ? list.join('、') : '不限';
+};
+
 const checkRegistration = async () => {
   // 如果用户未登录，不需要检查报名状态
   if (!authStore.isAuthenticated.value) {
@@ -107,6 +115,8 @@ onMounted(fetchEvent);
           <li>时间：{{ formatDate(event.startTime) }} - {{ formatDate(event.endTime) }}</li>
           <li>地点：{{ event.place }}</li>
           <li>人数：{{ event.currentCount }}/{{ event.limit }} 人</li>
+          <li>限制学院：{{ formatRestrictions(event.allowedColleges) }}</li>
+          <li>限制年级：{{ formatRestrictions(event.allowedGrades) }}</li>
         </ul>
         <div class="event-detail__actions">
           <button 
@@ -173,4 +183,3 @@ onMounted(fetchEvent);
   }
 }
 </style>
-

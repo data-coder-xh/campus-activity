@@ -26,6 +26,8 @@ CREATE TABLE events (
     place VARCHAR(100) NOT NULL,
     `limit` INT DEFAULT 0,
     status TINYINT DEFAULT 1,
+    allowed_colleges VARCHAR(255) DEFAULT '',
+    allowed_grades VARCHAR(255) DEFAULT '',
     creator_id INT NOT NULL,
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_event_creator FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE RESTRICT
@@ -54,4 +56,3 @@ INSERT INTO events (title, cover, description, start_time, end_time, place, `lim
 INSERT INTO registrations (user_id, event_id, remark, status) VALUES
 (1, 1, '希望体验 AI 实验', 1),
 (2, 2, '第一次参加马拉松', 0);
-
